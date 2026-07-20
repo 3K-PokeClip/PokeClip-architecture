@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState, type SyntheticEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type MouseEvent, type SyntheticEvent } from 'react'
 import { useElementWidth } from '../../hooks/useElementWidth'
 import type { DiagramMeta } from '../../lib/content'
+import { applyHighlight, buildGraph, clearHighlight, hitTest, type DiagramGraph } from '../../lib/diagramGraph'
 import './diagram.css'
 
 const FALLBACK_RATIO = 0.55
@@ -14,9 +15,15 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
   const [stageRef, stageWidth] = useElementWidth<HTMLDivElement>()
   const [natural, setNatural] = useState(() => naturalOf(diagram))
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [interactive, setInteractive] = useState(false)
+  const graphRef = useRef<DiagramGraph | null>(null)
+  const focusRef = useRef(-1)
 
   useEffect(() => {
     setNatural(naturalOf(diagram))
+    setInteractive(false)
+    graphRef.current = null
+    focusRef.current = -1
   }, [diagram])
 
   useEffect(() => {
@@ -25,16 +32,48 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
     return () => document.removeEventListener('fullscreenchange', onChange)
   }, [])
 
-  // 원본 body의 실제 크기를 로드 후 실측한다 — height가 명시되지 않은 문서 대응.
+  // 원본 body의 실제 크기를 로드 후 실측하고, 노드·연결선 그래프를 구성한다.
   const handleLoad = useCallback((event: SyntheticEvent<HTMLIFrameElement>) => {
     const doc = event.currentTarget.contentDocument
     if (!doc?.documentElement) return
     const w = doc.documentElement.scrollWidth
     const h = doc.documentElement.scrollHeight
     if (w > MIN_MEASURED_PX && h > MIN_MEASURED_PX) setNatural({ w, h })
+    try {
+      graphRef.current = buildGraph(doc)
+      setInteractive(Boolean(graphRef.current))
+    } catch {
+      graphRef.current = null
+      setInteractive(false)
+    }
   }, [])
 
   const scale = stageWidth > 0 ? stageWidth / natural.w : 0
+
+  const toDocPoint = (event: MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect()
+    return { x: (event.clientX - rect.left) / scale, y: (event.clientY - rect.top) / scale }
+  }
+
+  const handleCanvasClick = (event: MouseEvent<HTMLDivElement>) => {
+    const graph = graphRef.current
+    if (!graph || scale <= 0) return
+    const idx = hitTest(graph, toDocPoint(event))
+    if (idx < 0 || idx === focusRef.current) {
+      clearHighlight(graph)
+      focusRef.current = -1
+      return
+    }
+    applyHighlight(graph, idx)
+    focusRef.current = idx
+  }
+
+  const handleCanvasMove = (event: MouseEvent<HTMLDivElement>) => {
+    const graph = graphRef.current
+    if (!graph || scale <= 0) return
+    const overNode = hitTest(graph, toDocPoint(event)) >= 0
+    event.currentTarget.style.cursor = overNode ? 'pointer' : 'default'
+  }
 
   const toggleFullscreen = () => {
     if (document.fullscreenElement) void document.exitFullscreen()
@@ -61,7 +100,12 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
         </div>
       </div>
       <div className="diagram-stage" ref={stageRef}>
-        <div className="diagram-canvas" style={{ height: Math.round(natural.h * scale) }}>
+        <div
+          className="diagram-canvas"
+          style={{ height: Math.round(natural.h * scale) }}
+          onClick={handleCanvasClick}
+          onMouseMove={handleCanvasMove}
+        >
           {scale > 0 && (
             <iframe
               key={diagram.file}
@@ -75,6 +119,12 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
           )}
         </div>
       </div>
+      {interactive && (
+        <p className="diagram-hint">
+          박스를 클릭하면 화살표로 연결된 요소들이 떠오르며 강조됩니다 — 빈 곳이나 같은 박스를 다시 클릭하면
+          해제.
+        </p>
+      )}
     </section>
   )
 }

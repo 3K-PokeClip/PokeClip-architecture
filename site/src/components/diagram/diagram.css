@@ -178,3 +178,9 @@
   color: var(--paper);
   font-weight: 600;
 }
+
+.diagram-hint {
+  margin-top: 0.7rem;
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+}
