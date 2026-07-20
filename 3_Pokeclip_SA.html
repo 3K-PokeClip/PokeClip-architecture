@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Pokeclip · SA</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Pretendard','Noto Sans KR','Noto Sans CJK KR','Apple SD Gothic Neo',sans-serif;
+         background:#f4f5f7; width:2700px; height:1560px; position:relative; -webkit-font-smoothing:antialiased; }
+  .page-title { position:absolute; left:34px; top:22px; }
+  .page-title h1 { font-size:18px; font-weight:800; color:#111827; }
+  .page-title p { font-size:11.5px; color:#6b7280; margin-top:5px; }
+  .pos-note { position:absolute; left:34px; top:78px; width:560px; background:#fff; border:1px solid #e5e7eb; border-radius:10px;
+              padding:10px 14px; font-size:10.5px; color:#4b5563; line-height:1.55; }
+  .pos-note b { color:#111827; }
+
+  .actor { position:absolute; width:100px; text-align:center; }
+  .actor .face { width:60px; height:60px; border-radius:50%; margin:0 auto; display:flex; align-items:center; justify-content:center;
+                 font-size:27px; border:2px solid; background:#fff; }
+  .actor .name { margin-top:7px; font-size:12.5px; font-weight:800; color:#111827; }
+  .a-str .face { background:#eff6ff; border-color:#93c5fd; }
+  .a-ed .face { background:#fdf2f8; border-color:#f9a8d4; }
+  .a-ops .face { background:#fef2f2; border-color:#fca5a5; }
+
+  .box { position:absolute; background:#fff; border-radius:12px; border:1.8px solid; padding:12px 16px;
+         box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+  .box h3 { font-size:13px; font-weight:800; margin-bottom:3px; }
+  .box .lang { font-size:10px; font-weight:700; opacity:0.75; margin-bottom:7px; }
+  .box ul { list-style:none; }
+  .box li { font-size:11px; color:#374151; line-height:1.6; padding-left:10px; position:relative; }
+  .box li:before { content:'·'; position:absolute; left:0; }
+
+  .ui { border-color:#eab308; } .ui h3 { color:#a16207; }
+  .ui-blue { border-color:#3b82f6; } .ui-blue h3 { color:#1d4ed8; }
+  .ui-red { border-color:#ef4444; } .ui-red h3 { color:#b91c1c; }
+  .spring { border-color:#6db33f; } .spring h3 { color:#3f6212; } .spring .lang { color:#3f6212; }
+  .golang { border-color:#06b6d4; border-width:2.4px; } .golang h3 { color:#0e7490; } .golang .lang { color:#0e7490; }
+  .nodejs { border-color:#d97706; } .nodejs h3 { color:#92400e; } .nodejs .lang { color:#92400e; }
+  .python { border-color:#8b5cf6; } .python h3 { color:#6d28d9; } .python .lang { color:#6d28d9; }
+  .ext { border-color:#fb923c; background:#fff7ed; } .ext h3 { color:#c2410c; font-size:12px; }
+  .ext .sub { font-size:10px; color:#9a3412; margin-top:3px; }
+
+  .cyl { position:absolute; border:2px solid; border-top:none; background:#fff; padding:22px 18px 14px 18px;
+         border-radius:0 0 50% 50% / 0 0 14px 14px; }
+  .cyl:before { content:''; position:absolute; left:-2px; right:-2px; top:-9px; height:20px;
+                border:2px solid; border-color:inherit; border-radius:50%; background:#fff; }
+  .cyl h3 { font-size:13px; font-weight:800; position:relative; z-index:1; margin-bottom:5px; }
+  .cyl p { font-size:10.5px; color:#4b5563; line-height:1.55; position:relative; z-index:1; }
+  .cy-pg { border-color:#3b82f6; } .cy-pg h3 { color:#1d4ed8; }
+  .cy-rd { border-color:#ef4444; } .cy-rd h3 { color:#b91c1c; }
+  .cy-s3 { border-color:#10b981; } .cy-s3 h3 { color:#047857; }
+
+  .queue { position:absolute; border:2.2px solid #78716c; background:#fafaf9; border-radius:50%;
+           display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  .queue h3 { font-size:13px; font-weight:800; color:#44403c; }
+  .queue p { font-size:10px; color:#78716c; margin-top:3px; }
+
+  .legend { position:absolute; background:#fff; border:1px solid #e5e7eb; border-radius:14px;
+            box-shadow:0 2px 8px rgba(0,0,0,0.06); padding:16px 22px; }
+  .legend h3 { font-size:12.5px; font-weight:800; color:#111827; margin-bottom:10px; }
+  .legend .row { display:flex; align-items:center; gap:10px; margin-bottom:7px; }
+  .legend .chip { width:120px; flex:none; font-size:10px; font-weight:800; text-align:center;
+                  border:1.8px solid; border-radius:7px; padding:3.5px 6px; background:#fff; }
+  .legend .d { font-size:10.5px; color:#374151; }
+
+  svg.wires { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+</style>
+</head>
+<body>
+  <div class="page-title">
+    <h1>Pokeclip · 애플리케이션 아키텍처 SA (2026.07) — 화면 ↔ 서비스 6종 ↔ 데이터</h1>
+    <p>실선 = 동기(REST·스트림·SSE) · 점선 = 비동기(큐·이벤트)/외부 API · 서비스 색 = 구현 언어</p>
+  </div>
+  <div class="pos-note"><b>이 문서의 위치:</b> IA(화면 트리)와 SysA(서비스·배포) 사이의 <b>화면↔서비스↔데이터 매핑</b>. 서비스 분해와 언어(Spring·Go·Node·Python)는 팀 3인(FE1·BE2) 확정 스택. 클립 렌더는 FFmpeg 프로세스 호출이므로 Spring 잡 워커에 편입.</div>
+
+  <!-- actors -->
+  <div class="actor a-str" id="ac-str" style="left:36px; top:300px;"><div class="face">🎤</div><div class="name">스트리머</div></div>
+  <div class="actor a-ed" id="ac-ed" style="left:36px; top:660px;"><div class="face">🎬</div><div class="name">편집자</div></div>
+  <div class="actor a-ops" id="ac-ops" style="left:36px; top:1040px;"><div class="face">🛠️</div><div class="name">운영자</div></div>
+
+  <!-- col1: UI -->
+  <div class="box ui-blue" id="ui-plugin" style="left:210px; top:168px; width:310px;">
+    <h3>OBS 플러그인 (클라이언트)</h3>
+    <ul><li>SRT+TS 동시 송출 (영상+오디오 10트랙)</li><li>오디오 소스 탐지·트랙 매핑</li><li>핫키 하이라이트 마킹</li><li>자동 재연결·송출 통계</li></ul>
+  </div>
+  <div class="box ui" id="ui-setup" style="left:210px; top:330px; width:310px;">
+    <h3>온보딩·설정</h3>
+    <ul><li>구글 로그인 · 유튜브 연동</li><li>채널 등록 (치지직·SOOP)</li><li>편집자 초대·권한 토글</li><li>템플릿 관리</li></ul>
+  </div>
+  <div class="box ui" id="ui-live" style="left:210px; top:530px; width:310px;">
+    <h3>라이브 뷰</h3>
+    <ul><li>DVR 플레이어 (저지연+1h)</li><li>점프카드 스트립 (실시간)</li><li>채팅량 차트</li><li>송출 상태 위젯</li></ul>
+  </div>
+  <div class="box ui" id="ui-editor" style="left:210px; top:730px; width:310px;">
+    <h3>클립 에디터·보관함</h3>
+    <ul><li>구간·비율·오디오 트랙 선택</li><li>AI 자막·추천 제목</li><li>저장(레시피)·재편집</li><li>승인 대기함·업로드 결과</li></ul>
+  </div>
+  <div class="box ui" id="ui-vod" style="left:210px; top:930px; width:310px;">
+    <h3>VOD 뷰 (60일)</h3>
+    <ul><li>VOD 재생·챕터 탐색</li><li>오디오 트랙 전환</li><li>VOD에서 클립 제작</li></ul>
+  </div>
+  <div class="box ui-red" id="ui-ops" style="left:210px; top:1100px; width:310px;">
+    <h3>운영 콘솔 (운영자)</h3>
+    <ul><li>계정 관리 · 사용 통계</li><li>시스템 모니터링·장애 대응</li></ul>
+  </div>
+
+  <!-- col2: services -->
+  <div class="box spring" id="sv-auth" style="left:790px; top:120px; width:380px;">
+    <h3>Auth·Account Service</h3><div class="lang">Java · Spring Boot</div>
+    <ul><li>구글 OAuth 로그인 · JWT</li><li>편집자 초대·권한(업로드/자동업로드)</li><li>채널 등록·유튜브 토큰 보관</li><li>스트림 키 발급·검증</li></ul>
+  </div>
+  <div class="box spring" id="sv-clip" style="left:790px; top:330px; width:380px;">
+    <h3>Clip Service</h3><div class="lang">Java · Spring Boot</div>
+    <ul><li>점프카드 생성·SSE 푸시 (핫키·자동)</li><li>레시피 CRUD · 템플릿</li><li>웨이브폼·무음 필터 (구간 디코드)</li><li>승인 플로우 · 클립 상태 관리</li></ul>
+  </div>
+  <div class="box golang" id="sv-media" style="left:790px; top:565px; width:380px;">
+    <h3>Media Origin ⭐</h3><div class="lang">Go — 직접 구현 (MediaMTX 참조)</div>
+    <ul><li>SRT 수신(streamid·암호) · TS 디먹스</li><li>CMAF 세그먼트·LL-HLS 서빙 (DVR 1h)</li><li>멀티오디오 rendition · 세그먼트 S3 적재</li><li>VOD 매니페스트 확정 · 방송 이벤트 발행</li></ul>
+  </div>
+  <div class="box nodejs" id="sv-chat" style="left:790px; top:800px; width:380px;">
+    <h3>Chat Collector·Analytics</h3><div class="lang">TypeScript · Node (기존 자산 리팩토링)</div>
+    <ul><li>치지직(공식/비공식)·SOOP 수집</li><li>플랫폼별 시차 보정 → 타임라인 정렬</li><li>채팅 차트 집계 (윈도우·참여율)</li><li>하이라이트 탐지 → 점프카드 요청</li></ul>
+  </div>
+  <div class="box spring" id="sv-render" style="left:790px; top:1030px; width:380px;">
+    <h3>Render·Upload Worker</h3><div class="lang">Java · Spring (FFmpeg 프로세스 지휘)</div>
+    <ul><li>클립 렌더 (비율 5종·번인·amix·-14 LUFS)</li><li>유튜브 resumable 업로드 · CC 등록</li><li>쿼터 관리·재시도·상태 보고</li></ul>
+  </div>
+  <div class="box python" id="sv-ai" style="left:790px; top:1230px; width:380px;">
+    <h3>AI Worker</h3><div class="lang">Python (faster-whisper)</div>
+    <ul><li>선택 트랙 자막 생성 (vad_filter)</li><li>자막 기반 추천 제목</li></ul>
+  </div>
+
+  <!-- external top-right -->
+  <div class="box ext" id="ex-google" style="left:1780px; top:100px; width:190px;"><h3>Google OAuth</h3><div class="sub">로그인 · 채널 토큰</div></div>
+  <div class="box ext" id="ex-youtube" style="left:2000px; top:100px; width:210px;"><h3>YouTube Data API</h3><div class="sub">videos.insert · captions</div></div>
+  <div class="box ext" id="ex-chzzk" style="left:2240px; top:100px; width:200px;"><h3>CHZZK</h3><div class="sub">공식 Open API / 비공식 WS</div></div>
+  <div class="box ext" id="ex-soop" style="left:2470px; top:100px; width:150px;"><h3>SOOP</h3><div class="sub">채팅 WS</div></div>
+
+  <!-- data stores -->
+  <div class="cyl cy-pg" id="st-pg" style="left:2270px; top:360px; width:350px;">
+    <h3>PostgreSQL</h3><p>계정·권한 · 채널 연동 · 레시피 · 점프카드 · 클립·잡 상태 · 하이라이트 지표</p>
+  </div>
+  <div class="cyl cy-rd" id="st-rd" style="left:2270px; top:580px; width:350px;">
+    <h3>Redis</h3><p>세션 · 라이브 상태 · 채팅 집계 캐시 · SSE 팬아웃(pub/sub)</p>
+  </div>
+  <div class="cyl cy-s3" id="st-s3" style="left:2270px; top:780px; width:350px;">
+    <h3>S3 (오브젝트 스토리지)</h3><p>세그먼트 한 벌(핫 1h 롤링·콜드 전체) · VOD(60일) · 클립(영구) · 채팅 아카이브</p>
+  </div>
+
+  <!-- queue -->
+  <div class="queue" id="q" style="left:1560px; top:1180px; width:420px; height:110px;">
+    <h3>이벤트·잡 큐 (SQS / Redis Streams)</h3>
+    <p>방송 시작·종료 이벤트 · 렌더 잡 · AI 잡 · 업로드 잡</p>
+  </div>
+
+  <!-- legend -->
+  <div class="legend" style="left:2100px; top:1180px; width:520px;">
+    <h3>범례</h3>
+    <div class="row"><div class="chip" style="border-color:#eab308; color:#a16207;">UI 화면</div><div class="d">웹 대시보드 (React·TS) / 파랑=OBS 플러그인, 빨강=운영자</div></div>
+    <div class="row"><div class="chip" style="border-color:#6db33f; color:#3f6212;">Spring Boot</div><div class="d">코어 API·워커 (BE 2인 주력)</div></div>
+    <div class="row"><div class="chip" style="border-color:#06b6d4; color:#0e7490;">Go</div><div class="d">미디어 계층 직접 구현 (⭐ 핵심 어필)</div></div>
+    <div class="row"><div class="chip" style="border-color:#d97706; color:#92400e;">Node/TS</div><div class="d">채팅 수집·분석 (기존 자산)</div></div>
+    <div class="row"><div class="chip" style="border-color:#8b5cf6; color:#6d28d9;">Python</div><div class="d">AI 워커 (Whisper)</div></div>
+    <div class="row"><div class="chip" style="border-color:#fb923c; color:#c2410c;">외부 API</div><div class="d">Google·YouTube·CHZZK·SOOP</div></div>
+    <div class="row"><div class="chip" style="border-color:#9ca3af; color:#4b5563;">— / - - -</div><div class="d">실선=동기(REST·스트림·SSE) · 점선=비동기(큐)/외부</div></div>
+  </div>
+
+  <svg class="wires" id="wires"></svg>
+<script>
+(function(){
+  const svg = document.getElementById('wires');
+  const NS='http://www.w3.org/2000/svg';
+  svg.innerHTML = `<defs>
+    <marker id="ar" markerWidth="11" markerHeight="11" refX="8.5" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M1,1 L8,4.5 L1,8" fill="none" stroke="#6b7280" stroke-width="1.4"/></marker>
+    <marker id="ar2" markerWidth="11" markerHeight="11" refX="8.5" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M1,1 L8,4.5 L1,8" fill="none" stroke="#9ca3af" stroke-width="1.2"/></marker>
+  </defs>`;
+  function R(id){ const b=document.getElementById(id).getBoundingClientRect();
+    return {l:b.left,r:b.right,t:b.top,b:b.bottom,cx:b.left+b.width/2,cy:b.top+b.height/2,w:b.width,h:b.height}; }
+  function edgePoint(A, tx, ty){
+    const dx=tx-A.cx, dy=ty-A.cy;
+    const sx=(A.w/2)/Math.abs(dx||1e-9), sy=(A.h/2)/Math.abs(dy||1e-9);
+    const s=Math.min(sx,sy);
+    return {x:A.cx+dx*s, y:A.cy+dy*s};
+  }
+  function wire(a,b,opts){
+    const A=R(a), B=R(b);
+    const p1=edgePoint(A,B.cx,B.cy), p2=edgePoint(B,A.cx,A.cy);
+    const l=document.createElementNS(NS,'line');
+    l.setAttribute('x1',p1.x);l.setAttribute('y1',p1.y);l.setAttribute('x2',p2.x);l.setAttribute('y2',p2.y);
+    if(opts&&opts.dash){ l.setAttribute('stroke','#6b7280');l.setAttribute('stroke-width','1.4');l.setAttribute('stroke-dasharray','6 5');l.setAttribute('marker-end','url(#ar)'); }
+    else { l.setAttribute('stroke','#9ca3af');l.setAttribute('stroke-width','1.3');l.setAttribute('opacity','0.9');l.setAttribute('marker-end','url(#ar2)'); }
+    svg.appendChild(l);
+    if(opts&&opts.label){
+      const t=(opts.t===undefined)?0.5:opts.t;
+      const tx=p1.x+(p2.x-p1.x)*t, ty=p1.y+(p2.y-p1.y)*t-7;
+      const el=document.createElementNS(NS,'text');
+      el.setAttribute('x',tx);el.setAttribute('y',ty);el.setAttribute('text-anchor','middle');
+      el.setAttribute('style','font-size:10.5px;font-weight:700;fill:#374151;paint-order:stroke;stroke:#ffffff;stroke-width:5px;');
+      el.textContent=opts.label; svg.appendChild(el);
+    }
+  }
+  // actors -> UI
+  wire('ac-str','ui-plugin'); wire('ac-str','ui-setup'); wire('ac-str','ui-live');
+  wire('ac-ed','ui-live'); wire('ac-ed','ui-editor'); wire('ac-ed','ui-vod');
+  wire('ac-ops','ui-ops');
+  // UI -> services
+  wire('ui-plugin','sv-media',{label:'SRT 송출 (영상+A10)',t:0.55});
+  wire('ui-plugin','sv-auth',{label:'스트림 키',t:0.45});
+  wire('ui-plugin','sv-clip',{label:'컨트롤 채널 (핫키·트랙 매니페스트)',t:0.6});
+  wire('ui-setup','sv-auth');
+  wire('ui-live','sv-media',{label:'LL-HLS · DVR 1h',t:0.3});
+  wire('ui-live','sv-clip',{label:'점프카드 SSE',t:0.42});
+  wire('ui-live','sv-chat',{label:'채팅 차트',t:0.42});
+  wire('ui-editor','sv-clip',{label:'레시피·웨이브폼',t:0.62});
+  wire('ui-vod','sv-media',{label:'VOD 재생',t:0.4});
+  wire('ui-ops','sv-clip',{dash:true,label:'전 서비스 모니터링',t:0.35});
+  // services -> stores
+  wire('sv-auth','st-pg');
+  wire('sv-clip','st-pg'); wire('sv-clip','st-rd',{label:'SSE 팬아웃',t:0.55});
+  wire('sv-media','st-s3',{label:'세그먼트 실시간 적재',t:0.5});
+  wire('sv-media','st-rd',{t:0.6});
+  wire('sv-chat','st-pg'); wire('sv-chat','st-s3',{label:'채팅 아카이브',t:0.55});
+  wire('sv-render','st-s3'); wire('sv-render','st-pg');
+  wire('sv-ai','st-s3',{t:0.6});
+  wire('sv-ai','st-pg',{label:'자막·제목 저장',t:0.35});
+  // external (dashed)
+  wire('sv-auth','ex-google',{dash:true,label:'OAuth',t:0.5});
+  wire('sv-render','ex-youtube',{dash:true,label:'resumable 업로드·CC (스트리머 토큰)',t:0.55});
+  wire('sv-chat','ex-chzzk',{dash:true,label:'공식 API / 비공식 WS',t:0.55});
+  wire('sv-chat','ex-soop',{dash:true,t:0.6});
+  // queue (dashed)
+  wire('sv-media','q',{dash:true,label:'방송 시작·종료 이벤트',t:0.45});
+  wire('q','sv-chat',{dash:true,label:'수집 트리거',t:0.5});
+  wire('sv-clip','q',{dash:true,label:'렌더·AI·업로드 잡',t:0.5});
+  wire('q','sv-render',{dash:true});
+  wire('q','sv-ai',{dash:true});
+})();
+</script>
+</body>
+</html>
