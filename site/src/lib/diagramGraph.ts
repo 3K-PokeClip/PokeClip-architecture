@@ -89,6 +89,72 @@ function overlapRatio(a1: number, a2: number, b1: number, b2: number): number {
   return overlap <= 0 ? 0 : overlap / Math.min(a2 - a1, b2 - b1)
 }
 
+interface Connector {
+  line: SVGElement
+  labels: SVGElement[]
+  p1: Point | null
+  p2: Point | null
+}
+
+/** SVG 커넥터(선·경로)를 생성 순서대로 수집한다. 뒤따르는 text는 그 선의 라벨. */
+function collectConnectors(doc: Document): Connector[] {
+  const connectors: Connector[] = []
+  doc.querySelectorAll<SVGElement>('svg').forEach((svg) => {
+    let current: Connector | null = null
+    Array.from(svg.children).forEach((child) => {
+      const tag = child.tagName.toLowerCase()
+      if (tag === 'defs') return
+      if (tag === 'line' || tag === 'path' || tag === 'polyline') {
+        let p1: Point | null = null
+        let p2: Point | null = null
+        if (tag === 'line') {
+          p1 = { x: Number(child.getAttribute('x1')), y: Number(child.getAttribute('y1')) }
+          p2 = { x: Number(child.getAttribute('x2')), y: Number(child.getAttribute('y2')) }
+        } else {
+          const geo = child as SVGGeometryElement
+          if (typeof geo.getTotalLength === 'function') {
+            try {
+              const len = geo.getTotalLength()
+              if (len > 0) {
+                p1 = geo.getPointAtLength(0)
+                p2 = geo.getPointAtLength(len)
+              }
+            } catch {
+              p1 = null
+            }
+          }
+        }
+        if (p1 && (Number.isNaN(p1.x) || Number.isNaN(p2!.x))) {
+          p1 = null
+          p2 = null
+        }
+        current = { line: child as SVGElement, labels: [], p1, p2 }
+        connectors.push(current)
+      } else if (tag === 'text' && current) {
+        current.labels.push(child as SVGElement)
+      }
+    })
+  })
+  return connectors
+}
+
+/**
+ * 원본 스크립트에서 연결 정의(id 쌍)를 선언 순서대로 파싱한다.
+ * wire('a','b') 호출 또는 ['a','b',...] 배열 리터럴 — 다이어그램 원본이 쓰는 두 방식.
+ */
+function parseSourcePairs(doc: Document): [string, string][] {
+  const src = Array.from(doc.querySelectorAll('script'))
+    .map((el) => el.textContent ?? '')
+    .join('\n')
+  const wired = Array.from(src.matchAll(/wire\(\s*'([^']+)'\s*,\s*'([^']+)'/g)).map(
+    (m) => [m[1], m[2]] as [string, string],
+  )
+  if (wired.length > 0) return wired
+  return Array.from(src.matchAll(/\[\s*'([A-Za-z][\w-]*)'\s*,\s*'([A-Za-z][\w-]*)'/g)).map(
+    (m) => [m[1], m[2]] as [string, string],
+  )
+}
+
 export function buildGraph(doc: Document): DiagramGraph | null {
   const view = doc.defaultView
   if (!view || !doc.body) return null
@@ -124,44 +190,42 @@ export function buildGraph(doc: Document): DiagramGraph | null {
     adj.get(a)!.add(b)
   }
 
-  doc.querySelectorAll<SVGElement>('svg').forEach((svg) => {
-    let current: DiagramEdge | null = null
-    Array.from(svg.children).forEach((child) => {
-      const tag = child.tagName.toLowerCase()
-      if (tag === 'defs') return
-      if (tag === 'line' || tag === 'path' || tag === 'polyline') {
-        let p1: Point | null = null
-        let p2: Point | null = null
-        if (tag === 'line') {
-          p1 = { x: Number(child.getAttribute('x1')), y: Number(child.getAttribute('y1')) }
-          p2 = { x: Number(child.getAttribute('x2')), y: Number(child.getAttribute('y2')) }
-        } else {
-          const geo = child as SVGGeometryElement
-          if (typeof geo.getTotalLength === 'function') {
-            try {
-              const len = geo.getTotalLength()
-              if (len > 0) {
-                p1 = geo.getPointAtLength(0)
-                p2 = geo.getPointAtLength(len)
-              }
-            } catch {
-              p1 = null
-            }
-          }
-        }
-        current = null
-        if (!p1 || !p2 || Number.isNaN(p1.x) || Number.isNaN(p2.x)) return
-        const a = nodeAtEndpoint(nodes, p1)
-        const b = nodeAtEndpoint(nodes, p2)
-        if (a < 0 || b < 0 || a === b) return
-        current = { line: child as SVGElement, labels: [], a, b }
-        edges.push(current)
-        link(a, b)
-        link(b, a)
-      } else if (tag === 'text' && current) {
-        current.labels.push(child as SVGElement)
-      }
+  const connectors = collectConnectors(doc)
+
+  // 노드를 요소로 찾아 없으면 등록한다 — id로 지목된 요소는 박스 휴리스틱과 무관하게 노드다.
+  const indexOfEl = (el: HTMLElement): number => {
+    const found = nodes.findIndex((n) => n.el === el)
+    if (found >= 0) return found
+    const b = el.getBoundingClientRect()
+    nodes.push({ el, rect: { l: b.left, t: b.top, r: b.right, b: b.bottom, area: b.width * b.height } })
+    return nodes.length - 1
+  }
+
+  // 1순위: 원본 스크립트의 연결 정의 — 선 생성 순서와 정의 순서가 같아 1:1 매칭된다.
+  const sourcePairs = parseSourcePairs(doc)
+    .map(([a, b]) => [doc.getElementById(a), doc.getElementById(b)] as const)
+    .filter((pair): pair is readonly [HTMLElement, HTMLElement] => Boolean(pair[0] && pair[1]))
+
+  if (sourcePairs.length >= MIN_WIRED_EDGES && sourcePairs.length === connectors.length) {
+    sourcePairs.forEach(([elA, elB], k) => {
+      const a = indexOfEl(elA)
+      const b = indexOfEl(elB)
+      edges.push({ line: connectors[k].line, labels: connectors[k].labels, a, b })
+      link(a, b)
+      link(b, a)
     })
+    return { mode: 'wired', nodes, edges, adj }
+  }
+
+  // 2순위: 선 끝점 ↔ 노드 테두리 기하 매칭 (id 정의가 없는 다이어그램)
+  connectors.forEach((conn) => {
+    if (!conn.p1 || !conn.p2) return
+    const a = nodeAtEndpoint(nodes, conn.p1)
+    const b = nodeAtEndpoint(nodes, conn.p2)
+    if (a < 0 || b < 0 || a === b) return
+    edges.push({ line: conn.line, labels: conn.labels, a, b })
+    link(a, b)
+    link(b, a)
   })
 
   if (edges.length >= MIN_WIRED_EDGES) {
@@ -203,20 +267,6 @@ export function hitTest(graph: DiagramGraph, p: Point): number {
 
   for (const { i } of containing) {
     if (graph.adj.has(i)) return i
-  }
-
-  for (const { node } of containing) {
-    let best = -1
-    let bestDist = Infinity
-    graph.nodes.forEach((cand, j) => {
-      if (!graph.adj.has(j) || !node.el.contains(cand.el)) return
-      const dist = Math.hypot((cand.rect.l + cand.rect.r) / 2 - p.x, (cand.rect.t + cand.rect.b) / 2 - p.y)
-      if (dist < bestDist) {
-        best = j
-        bestDist = dist
-      }
-    })
-    if (best >= 0) return best
   }
   return -1
 }
