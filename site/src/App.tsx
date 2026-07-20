@@ -36,7 +36,6 @@ function App() {
                 title="기능 명세서"
                 lede="기능 범위·우선순위·개발 순서·리스크 — 기술 멘토 리뷰용 개발 기획서."
                 markdown={DOCS.spec}
-                sourcePath="9_Pokeclip_기능명세서.md"
               />
             }
           />
@@ -48,7 +47,6 @@ function App() {
                 title="하이라이트 탐지 연구 노트"
                 lede="채팅 반응 기반 하이라이트 탐지 방법론 — 팀 실측 기록."
                 markdown={DOCS.research}
-                sourcePath="8_Pokeclip_하이라이트연구노트.md"
               />
             }
           />

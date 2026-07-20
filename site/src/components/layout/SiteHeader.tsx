@@ -1,5 +1,4 @@
 import { Link, useLocation } from 'react-router-dom'
-import { REPO_URL } from '../../lib/links'
 import './layout.css'
 
 const NAV_ITEMS = [
@@ -35,9 +34,6 @@ export function SiteHeader() {
             })}
           </ul>
         </nav>
-        <a className="github-link" href={REPO_URL} target="_blank" rel="noreferrer">
-          GitHub ↗
-        </a>
       </div>
     </header>
   )
@@ -49,12 +45,6 @@ export function SiteFooter() {
       <div className="footer-inner">
         <p>
           <strong>PokeClip</strong> — 스트리밍 하이라이트·클립 자동화 서비스의 아키텍처 산출물.
-        </p>
-        <p className="footer-meta">
-          다이어그램·문서 원본:{' '}
-          <a href={REPO_URL} target="_blank" rel="noreferrer">
-            xodbs1021/PokeClip-architecture
-          </a>
         </p>
       </div>
     </footer>

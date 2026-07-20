@@ -29,7 +29,8 @@ const components: Components = {
     if (!href) return <span>{children}</span>
     const resolved = resolveDocHref(href)
     if (resolved.to) return <Link to={resolved.to}>{children}</Link>
-    const isAnchor = resolved.external!.startsWith('#')
+    if (!resolved.external) return <span>{children}</span>
+    const isAnchor = resolved.external.startsWith('#')
     return (
       <a href={resolved.external} target={isAnchor ? undefined : '_blank'} rel={isAnchor ? undefined : 'noreferrer'}>
         {children}

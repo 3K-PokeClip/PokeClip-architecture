@@ -91,18 +91,6 @@
   font-weight: 700;
 }
 
-.github-link {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  color: var(--ink-faint);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.github-link:hover {
-  color: var(--ink);
-}
 
 .site-footer {
   border-top: 1px solid var(--line);
@@ -117,11 +105,6 @@
   font-size: 0.92rem;
 }
 
-.footer-meta {
-  margin-top: 0.4rem;
-  font-size: 0.82rem;
-  color: var(--ink-faint);
-}
 
 @media (max-width: 720px) {
   .header-inner {

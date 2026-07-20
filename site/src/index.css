@@ -155,22 +155,3 @@ button {
   font-size: 1.02em;
 }
 
-.source-link {
-  display: inline-block;
-  margin-top: 1rem;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  color: var(--ink-faint);
-  text-decoration: none;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 0.3rem 0.85rem;
-  transition:
-    border-color var(--dur-fast) ease,
-    color var(--dur-fast) ease;
-}
-
-.source-link:hover {
-  border-color: var(--line-strong);
-  color: var(--ink);
-}

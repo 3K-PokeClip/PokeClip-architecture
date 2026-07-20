@@ -13,7 +13,6 @@ export function AdrIndexPage() {
       title="설계 결정 — ADR 현황판"
       lede="결정이 뒤집히면 삭제하지 않고 '대체됨'으로 이력을 보존한다. 개별 결정은 ADR 14건으로."
       markdown={DOCS.decisions}
-      sourcePath="6_Pokeclip_설계결정.md"
     />
   )
 }
