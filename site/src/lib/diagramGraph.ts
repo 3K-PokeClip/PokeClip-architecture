@@ -35,6 +35,7 @@ export interface DiagramGraph {
   mode: GraphMode
   nodes: DiagramNode[]
   edges: DiagramEdge[]
+  svgs: SVGElement[]
   adj: Map<number, Set<number>>
 }
 
@@ -218,7 +219,7 @@ export function buildGraph(doc: Document): DiagramGraph | null {
       link(a, b)
       link(b, a)
     })
-    return { mode: 'wired', nodes, edges, adj }
+    return { mode: 'wired', nodes, edges, svgs: collectSvgs(edges), adj }
   }
 
   // 2순위: 선 끝점 ↔ 노드 테두리 기하 매칭 (id 정의가 없는 다이어그램)
@@ -233,7 +234,7 @@ export function buildGraph(doc: Document): DiagramGraph | null {
   })
 
   if (edges.length >= MIN_WIRED_EDGES) {
-    return { mode: 'wired', nodes, edges, adj }
+    return { mode: 'wired', nodes, edges, svgs: collectSvgs(edges), adj }
   }
 
   // 그리드 폴백 — 리프 카드끼리 같은 열(단계)·같은 행(레인)이면 연계로 본다.
@@ -254,7 +255,7 @@ export function buildGraph(doc: Document): DiagramGraph | null {
     }
   }
   if (adj.size === 0) return null
-  return { mode: 'grid', nodes, edges, adj }
+  return { mode: 'grid', nodes, edges, svgs: collectSvgs(edges), adj }
 }
 
 /**
@@ -273,6 +274,12 @@ export function hitTest(graph: DiagramGraph, p: Point): number {
     if (graph.adj.has(i)) return i
   }
   return -1
+}
+
+function collectSvgs(edges: DiagramEdge[]): SVGElement[] {
+  return Array.from(
+    new Set(edges.map((edge) => edge.line.closest('svg')).filter((svg): svg is SVGSVGElement => Boolean(svg))),
+  )
 }
 
 const HOT_MARKER_SCALE = 1.35
@@ -336,6 +343,16 @@ export function applyHighlight(graph: DiagramGraph, focus: number): void {
     }
   })
 
+  // 관계선이 박스에 가려지지 않도록 강조 중에는 SVG 레이어를 박스(z 50~60) 위로 올린다.
+  graph.svgs.forEach((svg) => {
+    const view = svg.ownerDocument.defaultView
+    if (view && view.getComputedStyle(svg).position === 'static' && svg.dataset.pkRaised !== 'pos') {
+      svg.style.position = 'relative'
+      svg.dataset.pkRaised = 'pos'
+    }
+    svg.style.zIndex = '70'
+  })
+
   graph.edges.forEach((edge) => {
     const hot = edge.a === focus || edge.b === focus
     edge.line.classList.toggle('pk-edge-hot', hot)
@@ -355,6 +372,14 @@ export function clearHighlight(graph: DiagramGraph): void {
     node.el.classList.remove('pk-focus', 'pk-linked', 'pk-dim')
     node.el.style.removeProperty('transform')
   })
+  graph.svgs.forEach((svg) => {
+    svg.style.removeProperty('z-index')
+    if (svg.dataset.pkRaised === 'pos') {
+      svg.style.removeProperty('position')
+      delete svg.dataset.pkRaised
+    }
+  })
+
   graph.edges.forEach((edge) => {
     edge.line.classList.remove('pk-edge-hot', 'pk-edge-dim')
     if (edge.marker) edge.line.setAttribute('marker-end', edge.marker)
