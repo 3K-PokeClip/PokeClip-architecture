@@ -184,3 +184,40 @@
   font-size: 0.82rem;
   color: var(--ink-faint);
 }
+
+/* ── 확대/축소 컨트롤 ── */
+.zoom-controls {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.zoom-controls button {
+  padding: 0.12rem 0.6rem;
+  border-bottom: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+.zoom-controls button:hover {
+  color: var(--accent-deep);
+  background: var(--neutral-soft);
+}
+
+.zoom-controls .zoom-reset {
+  min-width: 3.4rem;
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.diagram-stage.zoomed {
+  overflow: auto;
+  max-height: 82vh;
+}

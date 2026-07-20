@@ -15,6 +15,7 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
   const [stageRef, stageWidth] = useElementWidth<HTMLDivElement>()
   const [natural, setNatural] = useState(() => naturalOf(diagram))
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [zoom, setZoom] = useState(1)
   const [graphMode, setGraphMode] = useState<GraphMode | null>(null)
   const graphRef = useRef<DiagramGraph | null>(null)
   const focusRef = useRef(-1)
@@ -22,6 +23,7 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
   useEffect(() => {
     setNatural(naturalOf(diagram))
     setGraphMode(null)
+    setZoom(1)
     graphRef.current = null
     focusRef.current = -1
   }, [diagram])
@@ -48,7 +50,8 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
     }
   }, [])
 
-  const scale = stageWidth > 0 ? stageWidth / natural.w : 0
+  const fitScale = stageWidth > 0 ? stageWidth / natural.w : 0
+  const scale = fitScale * zoom
 
   const toDocPoint = (event: MouseEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect()
@@ -91,6 +94,17 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
           <span className="diagram-en">{diagram.en}</span>
         </p>
         <div className="diagram-actions">
+          <div className="zoom-controls" role="group" aria-label="확대/축소">
+            <button type="button" onClick={() => setZoom((z) => Math.max(0.5, z / 1.25))} aria-label="축소" title="축소">
+              −
+            </button>
+            <button type="button" className="zoom-reset" onClick={() => setZoom(1)} title="화면 폭에 맞춤">
+              {Math.round(zoom * 100)}%
+            </button>
+            <button type="button" onClick={() => setZoom((z) => Math.min(4, z * 1.25))} aria-label="확대" title="확대">
+              ＋
+            </button>
+          </div>
           <button type="button" onClick={toggleFullscreen}>
             {isFullscreen ? '전체화면 종료' : '전체화면'}
           </button>
@@ -99,10 +113,10 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
           </a>
         </div>
       </div>
-      <div className="diagram-stage" ref={stageRef}>
+      <div className={zoom > 1 ? 'diagram-stage zoomed' : 'diagram-stage'} ref={stageRef}>
         <div
           className="diagram-canvas"
-          style={{ height: Math.round(natural.h * scale) }}
+          style={{ width: Math.round(natural.w * scale), height: Math.round(natural.h * scale) }}
           onClick={handleCanvasClick}
           onMouseMove={handleCanvasMove}
         >
