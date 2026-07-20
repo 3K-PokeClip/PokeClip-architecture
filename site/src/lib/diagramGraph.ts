@@ -46,6 +46,7 @@ const MIN_WIRED_EDGES = 3
 const BIG_NODE_RATIO = 0.04
 const GRID_OVERLAP = 0.55
 const GRID_LEAF_AREA_RATIO = 0.06
+const GRID_MIN_LEAF_AREA = 9000
 
 const ENHANCE_CSS = `
   .pk-node { transition: opacity .3s ease, transform .45s cubic-bezier(.34, 1.56, .64, 1), box-shadow .35s ease; }
@@ -235,7 +236,7 @@ export function buildGraph(doc: Document): DiagramGraph | null {
   // 그리드 폴백 — 리프 카드끼리 같은 열(단계)·같은 행(레인)이면 연계로 본다.
   const leaves = nodes
     .map((node, i) => ({ node, i }))
-    .filter(({ node }) => node.rect.area < canvasArea * GRID_LEAF_AREA_RATIO)
+    .filter(({ node }) => node.rect.area >= GRID_MIN_LEAF_AREA && node.rect.area < canvasArea * GRID_LEAF_AREA_RATIO)
     .filter(({ node }, _idx, arr) => !arr.some(({ node: other }) => other.el !== node.el && node.el.contains(other.el)))
   for (let x = 0; x < leaves.length; x += 1) {
     for (let y = x + 1; y < leaves.length; y += 1) {
