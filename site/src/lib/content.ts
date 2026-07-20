@@ -28,6 +28,18 @@ export const DOCS = {
   research: researchRaw,
 }
 
+// 다이어그램의 반응형 문서 뷰 — 원본 HTML에서 파생해 site가 소유하는 md.
+const diagramDocModules = import.meta.glob('../content/diagrams/*.md', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>
+
+export function diagramDoc(num: number): string {
+  const entry = Object.entries(diagramDocModules).find(([path]) => path.endsWith(`/${num}.md`))
+  return entry?.[1] ?? ''
+}
+
 const adrModules = import.meta.glob('../../../adr/*.md', {
   query: '?raw',
   import: 'default',

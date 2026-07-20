@@ -136,3 +136,45 @@
   transform-origin: top left;
   pointer-events: none;
 }
+
+/* ── 다이어그램/문서 토글 ── */
+.diagram-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.4rem;
+}
+
+.diagram-controls .diagram-tabs {
+  margin-bottom: 0;
+}
+
+.view-toggle {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.view-toggle button {
+  padding: 0.32rem 0.95rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  transition:
+    background var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+.view-toggle button:hover {
+  color: var(--ink);
+}
+
+.view-toggle button.active {
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+}
