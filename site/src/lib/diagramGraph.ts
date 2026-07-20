@@ -1,6 +1,7 @@
 // 다이어그램 iframe 내부의 노드(박스)와 SVG 연결선을 런타임에 스캔해
-// 클릭 인터랙션용 그래프를 만든다. 원본 HTML은 수정하지 않는다 —
-// 선 끝점이 노드 경계 위에 놓이는 원본 wire() 방식에 기대어 기하 매칭한다.
+// 클릭 인터랙션용 그래프를 만든다. 원본 HTML은 수정하지 않는다.
+// - wired 모드: 선 끝점이 노드 경계 위에 놓이는 원본 배선 방식에 기대어 기하 매칭
+// - grid 모드: 연결선이 거의 없는 매트릭스형 다이어그램(유저 저니)은 행·열 정렬로 연계 구성
 
 interface Point {
   x: number
@@ -27,7 +28,10 @@ export interface DiagramEdge {
   b: number
 }
 
+export type GraphMode = 'wired' | 'grid'
+
 export interface DiagramGraph {
+  mode: GraphMode
   nodes: DiagramNode[]
   edges: DiagramEdge[]
   adj: Map<number, Set<number>>
@@ -38,6 +42,10 @@ const MIN_NODE_AREA = 800
 const MAX_NODE_AREA_RATIO = 0.28
 const ENDPOINT_SLACK = 7
 const HIT_SLACK = 4
+const MIN_WIRED_EDGES = 3
+const BIG_NODE_RATIO = 0.04
+const GRID_OVERLAP = 0.55
+const GRID_LEAF_AREA_RATIO = 0.06
 
 const ENHANCE_CSS = `
   .pk-node { transition: opacity .3s ease, transform .45s cubic-bezier(.34, 1.56, .64, 1), box-shadow .35s ease; }
@@ -53,14 +61,32 @@ function containsPoint(rect: NodeRect, p: Point, slack: number): boolean {
   return p.x >= rect.l - slack && p.x <= rect.r + slack && p.y >= rect.t - slack && p.y <= rect.b + slack
 }
 
-/** 점을 포함하는 후보 중 가장 작은 박스의 인덱스. 없으면 -1. */
-function nodeAt(nodes: DiagramNode[], p: Point, slack: number): number {
+/** 점에서 사각형 테두리까지의 거리 — 안쪽이면 가장 가까운 변까지, 바깥이면 사각형까지. */
+function borderDistance(rect: NodeRect, p: Point): number {
+  const outX = Math.max(rect.l - p.x, p.x - rect.r, 0)
+  const outY = Math.max(rect.t - p.y, p.y - rect.b, 0)
+  if (outX > 0 || outY > 0) return Math.hypot(outX, outY)
+  return Math.min(p.x - rect.l, rect.r - p.x, p.y - rect.t, rect.b - p.y)
+}
+
+/** 선 끝점이 닿은 노드 — 테두리에 가장 가까운 후보(원본이 경계 위에 끝점을 그리므로). */
+function nodeAtEndpoint(nodes: DiagramNode[], p: Point): number {
   let best = -1
+  let bestDist = Infinity
   for (let i = 0; i < nodes.length; i += 1) {
-    if (!containsPoint(nodes[i].rect, p, slack)) continue
-    if (best < 0 || nodes[i].rect.area < nodes[best].rect.area) best = i
+    if (!containsPoint(nodes[i].rect, p, ENDPOINT_SLACK)) continue
+    const dist = borderDistance(nodes[i].rect, p)
+    if (dist < bestDist - 0.5 || (Math.abs(dist - bestDist) <= 0.5 && best >= 0 && nodes[i].rect.area < nodes[best].rect.area)) {
+      best = i
+      bestDist = dist
+    }
   }
   return best
+}
+
+function overlapRatio(a1: number, a2: number, b1: number, b2: number): number {
+  const overlap = Math.min(a2, b2) - Math.max(a1, b1)
+  return overlap <= 0 ? 0 : overlap / Math.min(a2 - a1, b2 - b1)
 }
 
 export function buildGraph(doc: Document): DiagramGraph | null {
@@ -125,8 +151,8 @@ export function buildGraph(doc: Document): DiagramGraph | null {
         }
         current = null
         if (!p1 || !p2 || Number.isNaN(p1.x) || Number.isNaN(p2.x)) return
-        const a = nodeAt(nodes, p1, ENDPOINT_SLACK)
-        const b = nodeAt(nodes, p2, ENDPOINT_SLACK)
+        const a = nodeAtEndpoint(nodes, p1)
+        const b = nodeAtEndpoint(nodes, p2)
         if (a < 0 || b < 0 || a === b) return
         current = { line: child as SVGElement, labels: [], a, b }
         edges.push(current)
@@ -138,18 +164,68 @@ export function buildGraph(doc: Document): DiagramGraph | null {
     })
   })
 
-  if (edges.length === 0) return null
-  return { nodes, edges, adj }
+  if (edges.length >= MIN_WIRED_EDGES) {
+    return { mode: 'wired', nodes, edges, adj }
+  }
+
+  // 그리드 폴백 — 리프 카드끼리 같은 열(단계)·같은 행(레인)이면 연계로 본다.
+  const leaves = nodes
+    .map((node, i) => ({ node, i }))
+    .filter(({ node }) => node.rect.area < canvasArea * GRID_LEAF_AREA_RATIO)
+    .filter(({ node }, _idx, arr) => !arr.some(({ node: other }) => other.el !== node.el && node.el.contains(other.el)))
+  for (let x = 0; x < leaves.length; x += 1) {
+    for (let y = x + 1; y < leaves.length; y += 1) {
+      const A = leaves[x].node.rect
+      const B = leaves[y].node.rect
+      const sameCol = overlapRatio(A.l, A.r, B.l, B.r) >= GRID_OVERLAP
+      const sameRow = overlapRatio(A.t, A.b, B.t, B.b) >= GRID_OVERLAP
+      if (sameCol || sameRow) {
+        link(leaves[x].i, leaves[y].i)
+        link(leaves[y].i, leaves[x].i)
+      }
+    }
+  }
+  if (adj.size === 0) return null
+  return { mode: 'grid', nodes, edges, adj }
 }
 
-/** 클릭 좌표(문서 기준)에 걸리는, 연결선이 있는 노드의 인덱스. 없으면 -1. */
+/**
+ * 클릭 좌표에 해당하는 배선 노드.
+ * 1) 점을 포함하는 후보를 작은 것부터 훑어 배선된 첫 노드
+ * 2) 없으면 그 컨테이너 안의 배선 노드 중 클릭점에 가장 가까운 것 (자손 폴백)
+ */
 export function hitTest(graph: DiagramGraph, p: Point): number {
-  const idx = nodeAt(graph.nodes, p, HIT_SLACK)
-  if (idx < 0) return -1
-  return graph.adj.has(idx) ? idx : -1
+  const containing = graph.nodes
+    .map((node, i) => ({ node, i }))
+    .filter(({ node }) => containsPoint(node.rect, p, HIT_SLACK))
+    .sort((a, b) => a.node.rect.area - b.node.rect.area)
+  if (containing.length === 0) return -1
+
+  for (const { i } of containing) {
+    if (graph.adj.has(i)) return i
+  }
+
+  for (const { node } of containing) {
+    let best = -1
+    let bestDist = Infinity
+    graph.nodes.forEach((cand, j) => {
+      if (!graph.adj.has(j) || !node.el.contains(cand.el)) return
+      const dist = Math.hypot((cand.rect.l + cand.rect.r) / 2 - p.x, (cand.rect.t + cand.rect.b) / 2 - p.y)
+      if (dist < bestDist) {
+        best = j
+        bestDist = dist
+      }
+    })
+    if (best >= 0) return best
+  }
+  return -1
 }
 
 export function applyHighlight(graph: DiagramGraph, focus: number): void {
+  const canvasArea = (() => {
+    const body = graph.nodes[0]?.el.ownerDocument.body
+    return body ? body.scrollWidth * body.scrollHeight : Infinity
+  })()
   const linked = graph.adj.get(focus) ?? new Set<number>()
   const raised = new Set<number>([focus, ...linked])
 
@@ -166,8 +242,10 @@ export function applyHighlight(graph: DiagramGraph, focus: number): void {
     node.el.classList.toggle('pk-linked', isLinked)
     node.el.classList.toggle('pk-dim', !touchesRaised)
     if (isFocus || isLinked) {
+      const isBig = node.rect.area > canvasArea * BIG_NODE_RATIO
+      const scale = isFocus ? (isBig ? 1.012 : 1.05) : isBig ? 1.008 : 1.025
       const hasOwnTransform = node.el.style.transform !== '' && !node.el.style.transform.startsWith('scale')
-      if (!hasOwnTransform) node.el.style.transform = isFocus ? 'scale(1.05)' : 'scale(1.025)'
+      if (!hasOwnTransform) node.el.style.transform = `scale(${scale})`
     } else {
       node.el.style.removeProperty('transform')
     }

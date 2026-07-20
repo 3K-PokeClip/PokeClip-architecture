@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent, type SyntheticEvent } from 'react'
 import { useElementWidth } from '../../hooks/useElementWidth'
 import type { DiagramMeta } from '../../lib/content'
-import { applyHighlight, buildGraph, clearHighlight, hitTest, type DiagramGraph } from '../../lib/diagramGraph'
+import { applyHighlight, buildGraph, clearHighlight, hitTest, type DiagramGraph, type GraphMode } from '../../lib/diagramGraph'
 import './diagram.css'
 
 const FALLBACK_RATIO = 0.55
@@ -15,13 +15,13 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
   const [stageRef, stageWidth] = useElementWidth<HTMLDivElement>()
   const [natural, setNatural] = useState(() => naturalOf(diagram))
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [interactive, setInteractive] = useState(false)
+  const [graphMode, setGraphMode] = useState<GraphMode | null>(null)
   const graphRef = useRef<DiagramGraph | null>(null)
   const focusRef = useRef(-1)
 
   useEffect(() => {
     setNatural(naturalOf(diagram))
-    setInteractive(false)
+    setGraphMode(null)
     graphRef.current = null
     focusRef.current = -1
   }, [diagram])
@@ -41,10 +41,10 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
     if (w > MIN_MEASURED_PX && h > MIN_MEASURED_PX) setNatural({ w, h })
     try {
       graphRef.current = buildGraph(doc)
-      setInteractive(Boolean(graphRef.current))
+      setGraphMode(graphRef.current?.mode ?? null)
     } catch {
       graphRef.current = null
-      setInteractive(false)
+      setGraphMode(null)
     }
   }, [])
 
@@ -119,10 +119,11 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
           )}
         </div>
       </div>
-      {interactive && (
+      {graphMode && (
         <p className="diagram-hint">
-          박스를 클릭하면 화살표로 연결된 요소들이 떠오르며 강조됩니다 — 빈 곳이나 같은 박스를 다시 클릭하면
-          해제.
+          {graphMode === 'wired'
+            ? '박스를 클릭하면 화살표로 연결된 요소들이 떠오르며 강조됩니다 — 빈 곳이나 같은 박스를 다시 클릭하면 해제.'
+            : '카드를 클릭하면 같은 단계(열)·같은 레인(행)의 카드들이 떠오르며 강조됩니다 — 빈 곳 클릭으로 해제.'}
         </p>
       )}
     </section>
