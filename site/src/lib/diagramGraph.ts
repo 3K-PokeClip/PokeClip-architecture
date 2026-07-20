@@ -24,6 +24,7 @@ export interface DiagramNode {
 export interface DiagramEdge {
   line: SVGElement
   labels: SVGElement[]
+  marker: string | null
   a: number
   b: number
 }
@@ -50,11 +51,12 @@ const GRID_MIN_LEAF_AREA = 9000
 
 const ENHANCE_CSS = `
   .pk-node { transition: opacity .3s ease, transform .45s cubic-bezier(.34, 1.56, .64, 1), box-shadow .35s ease; }
+  svg line, svg path, svg polyline { transition: stroke .3s ease, stroke-width .45s cubic-bezier(.34, 1.56, .64, 1), opacity .3s ease; }
   .pk-dim { opacity: .16 !important; }
   .pk-edge-dim { opacity: .09 !important; }
   .pk-focus { z-index: 60 !important; box-shadow: 0 14px 34px rgba(0,0,0,.22), 0 0 0 2.5px #e5484d !important; }
   .pk-linked { z-index: 50 !important; box-shadow: 0 10px 26px rgba(0,0,0,.16), 0 0 0 2px #1c1917 !important; }
-  .pk-edge-hot { stroke: #e5484d !important; stroke-width: 2.6px !important; opacity: 1 !important; }
+  .pk-edge-hot { stroke: #e5484d !important; stroke-width: 3px !important; opacity: 1 !important; }
   .pk-label-hot { fill: #b3261e !important; opacity: 1 !important; }
 `
 
@@ -211,7 +213,7 @@ export function buildGraph(doc: Document): DiagramGraph | null {
     sourcePairs.forEach(([elA, elB], k) => {
       const a = indexOfEl(elA)
       const b = indexOfEl(elB)
-      edges.push({ line: connectors[k].line, labels: connectors[k].labels, a, b })
+      edges.push({ line: connectors[k].line, labels: connectors[k].labels, marker: connectors[k].line.getAttribute('marker-end'), a, b })
       link(a, b)
       link(b, a)
     })
@@ -224,7 +226,7 @@ export function buildGraph(doc: Document): DiagramGraph | null {
     const a = nodeAtEndpoint(nodes, conn.p1)
     const b = nodeAtEndpoint(nodes, conn.p2)
     if (a < 0 || b < 0 || a === b) return
-    edges.push({ line: conn.line, labels: conn.labels, a, b })
+    edges.push({ line: conn.line, labels: conn.labels, marker: conn.line.getAttribute('marker-end'), a, b })
     link(a, b)
     link(b, a)
   })
@@ -272,6 +274,37 @@ export function hitTest(graph: DiagramGraph, p: Point): number {
   return -1
 }
 
+const HOT_MARKER_SCALE = 1.35
+
+/** 선의 marker-end 화살촉을 복제해 빨간색·확대판 마커 id를 만든다 (문서당 1회 생성). */
+function hotMarkerFor(line: SVGElement): string | null {
+  const ref = line.getAttribute('marker-end')
+  const match = ref?.match(/url\(#([^)]+)\)/)
+  if (!match) return null
+  const doc = line.ownerDocument
+  const hotId = `${match[1]}-pkhot`
+  if (!doc.getElementById(hotId)) {
+    const original = doc.getElementById(match[1])
+    if (!original) return null
+    const clone = original.cloneNode(true) as Element
+    clone.setAttribute('id', hotId)
+    const scaleAttr = (attr: string) => {
+      const value = parseFloat(clone.getAttribute(attr) ?? '')
+      if (!Number.isNaN(value)) clone.setAttribute(attr, String(value * HOT_MARKER_SCALE))
+    }
+    scaleAttr('markerWidth')
+    scaleAttr('markerHeight')
+    scaleAttr('refX')
+    scaleAttr('refY')
+    clone.querySelectorAll('path').forEach((shape) => {
+      shape.setAttribute('stroke', '#e5484d')
+      shape.setAttribute('transform', `scale(${HOT_MARKER_SCALE})`)
+    })
+    original.parentElement?.appendChild(clone)
+  }
+  return `url(#${hotId})`
+}
+
 export function applyHighlight(graph: DiagramGraph, focus: number): void {
   const canvasArea = (() => {
     const body = graph.nodes[0]?.el.ownerDocument.body
@@ -306,6 +339,9 @@ export function applyHighlight(graph: DiagramGraph, focus: number): void {
     const hot = edge.a === focus || edge.b === focus
     edge.line.classList.toggle('pk-edge-hot', hot)
     edge.line.classList.toggle('pk-edge-dim', !hot)
+    if (edge.marker) {
+      edge.line.setAttribute('marker-end', hot ? (hotMarkerFor(edge.line) ?? edge.marker) : edge.marker)
+    }
     edge.labels.forEach((label) => {
       label.classList.toggle('pk-label-hot', hot)
       label.classList.toggle('pk-edge-dim', !hot)
@@ -320,6 +356,7 @@ export function clearHighlight(graph: DiagramGraph): void {
   })
   graph.edges.forEach((edge) => {
     edge.line.classList.remove('pk-edge-hot', 'pk-edge-dim')
+    if (edge.marker) edge.line.setAttribute('marker-end', edge.marker)
     edge.labels.forEach((label) => label.classList.remove('pk-label-hot', 'pk-edge-dim'))
   })
 }
