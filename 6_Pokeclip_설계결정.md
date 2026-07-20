@@ -43,3 +43,4 @@
 
 - 다이어그램: 0_UseCase · 1_IA · 2_UserJourney · 3_SA · 4_SysA · 5_CA (PNG+HTML)
 - 연구 노트: 8_Pokeclip_하이라이트연구노트.md (ADR-011 상세판, 멘토 미팅 자료)
+- 기능 명세서: [9_Pokeclip_기능명세서.md](9_Pokeclip_기능명세서.md) (기술 멘토 리뷰용 — 기능 목록·우선순위 P0/P1/P2·마일스톤 M1~M5·리스크)

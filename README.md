@@ -15,8 +15,9 @@ OBS 플러그인이 본방(치지직/SOOP)과 병행으로 멀티오디오(~10�
 | 4 | SysA (시스템 아키텍처) | [PNG](4_Pokeclip_SysA.png) · [HTML](4_Pokeclip_SysA.html) |
 | 5 | CA (클라우드 아키텍처, AWS) | [PNG](5_Pokeclip_CA.png) · [HTML](5_Pokeclip_CA.html) |
 | 6 | 설계 결정 인덱스 (ADR 현황판) | [6_Pokeclip_설계결정.md](6_Pokeclip_설계결정.md) |
-| 7 | 기획서 | 작성 예정 |
+| 7 | 기획서 (사업 — 소마 심사용) | 작성 예정 |
 | 8 | 하이라이트 탐지 연구 노트 (팀 실측) | [8_Pokeclip_하이라이트연구노트.md](8_Pokeclip_하이라이트연구노트.md) |
+| 9 | 기능 명세서 (기술 멘토 리뷰용) | [9_Pokeclip_기능명세서.md](9_Pokeclip_기능명세서.md) |
 | — | 결정별 ADR 14건 | [adr/](adr/) |
 
 다이어그램은 self-contained HTML로 작성 후 PNG로 렌더링한다(HTML이 원본). 설계 결정은 ADR 체계로 관리 — 결정이 뒤집히면 삭제하지 않고 `대체됨 → ADR-XXX`로 이력을 보존한다.
