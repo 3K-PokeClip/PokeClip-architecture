@@ -1,0 +1,19 @@
+name: Sync main to xodbs1021 repo
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  push-to-upstream:
+    # 이 파일이 xodbs1021 저장소로 함께 복사돼도 거기서는 실행되지 않도록 조직 저장소에서만 동작
+    if: github.repository == '3K-PokeClip/PokeClip-architecture'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push main to xodbs1021/PokeClip-architecture
+        run: git push https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com/xodbs1021/PokeClip-architecture.git HEAD:main
