@@ -16,6 +16,7 @@ const ARTIFACTS = [
   { num: '9', title: '기능 명세서 (기술 멘토 리뷰용)', kind: '문서', to: '/spec' },
   { num: '10', title: '데이터 플로우 (SQS·DB 설계 초안)', kind: '문서', to: '/dataflow' },
   { num: '11', title: '역할 분담 (3인 · 인터페이스 계약)', kind: '문서', to: '/roles' },
+  { num: '12', title: 'M1 수직 슬라이스 실행 계획', kind: '문서', to: '/m1' },
 ] as const
 
 const STACK = [

@@ -72,6 +72,17 @@ function App() {
               />
             }
           />
+          <Route
+            path="/m1"
+            element={
+              <DocPage
+                eyebrow="Doc 12 · M1 Plan"
+                title="M1 수직 슬라이스 실행 계획"
+                lede="계약 → 언블록 스텁 → 리스크 우선 검증 → 병렬 → 통합 게이트 4개 — 폴백 판정 기준 포함."
+                markdown={DOCS.m1}
+              />
+            }
+          />
           <Route path="/adr" element={<AdrIndexPage />} />
           <Route path="/adr/:slug" element={<AdrDetailPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

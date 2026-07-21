@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: '/dataflow', label: '데이터플로우', isActive: (path: string) => path === '/dataflow' },
   { to: '/research', label: '연구노트', isActive: (path: string) => path === '/research' },
   { to: '/roles', label: '역할분담', isActive: (path: string) => path === '/roles' },
+  { to: '/m1', label: 'M1 계획', isActive: (path: string) => path === '/m1' },
 ]
 
 export function SiteHeader() {
