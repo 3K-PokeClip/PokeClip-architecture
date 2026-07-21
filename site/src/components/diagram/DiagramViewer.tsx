@@ -1,10 +1,18 @@
-import { useCallback, useEffect, useRef, useState, type MouseEvent, type SyntheticEvent } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type SyntheticEvent } from 'react'
 import { useElementWidth } from '../../hooks/useElementWidth'
 import type { DiagramMeta } from '../../lib/content'
 import { applyHighlight, buildGraph, clearHighlight, hitTest, type DiagramGraph, type GraphMode } from '../../lib/diagramGraph'
 import './diagram.css'
 
 const FALLBACK_RATIO = 0.55
+const ZOOM_MIN = 0.5
+const ZOOM_MAX = 4
+
+interface SafariGestureEvent extends UIEvent {
+  scale: number
+  clientX: number
+  clientY: number
+}
 const MIN_MEASURED_PX = 200
 
 function naturalOf(diagram: DiagramMeta) {
@@ -16,6 +24,9 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
   const [natural, setNatural] = useState(() => naturalOf(diagram))
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [zoom, setZoom] = useState(1)
+  const zoomRef = useRef(1)
+  zoomRef.current = zoom
+  const pinchAnchor = useRef<{ px: number; py: number; cx: number; cy: number } | null>(null)
   const [graphMode, setGraphMode] = useState<GraphMode | null>(null)
   const graphRef = useRef<DiagramGraph | null>(null)
   const focusRef = useRef(-1)
@@ -27,6 +38,64 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
     graphRef.current = null
     focusRef.current = -1
   }, [diagram])
+
+  // 트랙패드 핀치(ctrl+wheel / Safari gesture)를 다이어그램 줌으로 — 커서 위치 기준 확대.
+  useEffect(() => {
+    const stage = stageRef.current
+    if (!stage) return
+
+    const applyPinch = (factor: number, clientX: number, clientY: number) => {
+      const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoomRef.current * factor))
+      if (next === zoomRef.current) return
+      const rect = stage.getBoundingClientRect()
+      const px = clientX - rect.left
+      const py = clientY - rect.top
+      pinchAnchor.current = {
+        px,
+        py,
+        cx: (stage.scrollLeft + px) / zoomRef.current,
+        cy: (stage.scrollTop + py) / zoomRef.current,
+      }
+      setZoom(next)
+    }
+
+    const onWheel = (event: WheelEvent) => {
+      if (!event.ctrlKey) return
+      event.preventDefault()
+      applyPinch(Math.exp(-event.deltaY * 0.01), event.clientX, event.clientY)
+    }
+
+    let lastScale = 1
+    const onGestureStart = (event: Event) => {
+      event.preventDefault()
+      lastScale = 1
+    }
+    const onGestureChange = (event: Event) => {
+      event.preventDefault()
+      const gesture = event as SafariGestureEvent
+      applyPinch(gesture.scale / lastScale, gesture.clientX, gesture.clientY)
+      lastScale = gesture.scale
+    }
+
+    stage.addEventListener('wheel', onWheel, { passive: false })
+    stage.addEventListener('gesturestart', onGestureStart)
+    stage.addEventListener('gesturechange', onGestureChange)
+    return () => {
+      stage.removeEventListener('wheel', onWheel)
+      stage.removeEventListener('gesturestart', onGestureStart)
+      stage.removeEventListener('gesturechange', onGestureChange)
+    }
+  }, [stageRef])
+
+  // 핀치 후 커서 아래 지점이 고정되도록 스크롤 보정.
+  useLayoutEffect(() => {
+    const stage = stageRef.current
+    const anchor = pinchAnchor.current
+    if (!stage || !anchor) return
+    pinchAnchor.current = null
+    stage.scrollLeft = anchor.cx * zoom - anchor.px
+    stage.scrollTop = anchor.cy * zoom - anchor.py
+  }, [zoom, stageRef])
 
   useEffect(() => {
     const onChange = () => setIsFullscreen(Boolean(document.fullscreenElement))
