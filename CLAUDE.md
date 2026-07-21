@@ -6,7 +6,7 @@
 
 | 번호 | 내용 |
 |---|---|
-| 0~5 | 다이어그램 (UseCase·IA·유저저니·SA·SysA·CA) — HTML이 원본, PNG는 렌더본 |
+| 0~5 | 다이어그램 (UseCase·IA·유저저니·SA·SysA·CA) — HTML이 원본, PNG는 렌더본. 0~4는 EDGE 시각 문법(모노크롬·역할 그룹·직교 배선), 5번 CA는 AWS 아이콘·AZ-A/B Target Production 상세본 + 설계노트 `5_Pokeclip_CA.md`(MVP↔Production 차이·문서 불일치 판단) |
 | 6 + adr/ | 설계 결정 인덱스 + ADR 15건 |
 | 8 | 하이라이트 탐지 연구 노트 |
 | 9 | **기능 명세서** — 기능 ID(A1~I7)·우선순위·마일스톤의 기준 문서 |

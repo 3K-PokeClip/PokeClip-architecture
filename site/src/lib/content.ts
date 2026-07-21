@@ -7,8 +7,7 @@ import researchRaw from '../../../8_Pokeclip_하이라이트연구노트.md?raw'
 import specRaw from '../../../9_Pokeclip_기능명세서.md?raw'
 
 export interface DiagramMeta {
-  /** 라우트·칩·문서 키 — 기본 0~5 숫자, 변형본은 '5v2' 같은 문자열. */
-  num: number | string
+  num: number
   title: string
   en: string
   file: string
@@ -23,7 +22,7 @@ export const DIAGRAMS: DiagramMeta[] = [
   { num: 2, title: '유저 저니', en: 'User Journey', file: '2_Pokeclip_UserJourney.html', width: 2620, height: 1400 },
   { num: 3, title: '서비스 아키텍처', en: 'Service Architecture', file: '3_Pokeclip_SA.html', width: 2700, height: 1560 },
   { num: 4, title: '시스템 아키텍처', en: 'System Architecture', file: '4_Pokeclip_SysA.html', width: 2700, height: 1700 },
-  { num: '5v2', title: '클라우드 아키텍처 v2 · Target Production', en: 'Cloud Architecture v2', file: '5_Pokeclip_CA_v2.html', width: 3840, height: 2320 },
+  { num: 5, title: '클라우드 아키텍처 · AWS', en: 'Cloud Architecture', file: '5_Pokeclip_CA.html', width: 3840, height: 2320 },
 ]
 
 export const DOCS = {
@@ -42,7 +41,7 @@ const diagramDocModules = import.meta.glob('../content/diagrams/*.md', {
   eager: true,
 }) as Record<string, string>
 
-export function diagramDoc(num: number | string): string {
+export function diagramDoc(num: number): string {
   const entry = Object.entries(diagramDocModules).find(([path]) => path.endsWith(`/${num}.md`))
   return entry?.[1] ?? ''
 }

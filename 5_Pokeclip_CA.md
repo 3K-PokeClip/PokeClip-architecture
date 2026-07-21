@@ -1,6 +1,6 @@
-# 5_CA v2 — Target Production Cloud Architecture (설계 노트)
+# 5_CA — Target Production Cloud Architecture (설계 노트)
 
-> `5_Pokeclip_CA_v2.html` / `.png` 의 판단 근거. 구 `5_Pokeclip_CA.html`(EDGE-SA 톤 모노크롬본)을 **대체하는 클라우드 아키텍처 정본** — AWS 공식 아이콘 스타일·존 위계·엣지 프로토콜 표기를 갖춘 발표/멘토 리뷰용 상세본. (구본은 git 이력에 보존)
+> `5_Pokeclip_CA.html` / `.png` 의 판단 근거. AWS 공식 아이콘 스타일·존 위계(Region>VPC>AZ-A/B>Subnet)·엣지 프로토콜 표기를 갖춘 발표/멘토 리뷰용 상세본. (초기 EDGE-SA 톤 모노크롬본은 git 이력에 보존)
 
 ## Source of Truth
 README · 3_SA · 4_SysA · 5_CA · 6_설계결정 · 9_기능명세서 · 10_데이터플로우 · adr/(특히 ADR-003·005·013·015). 최신 ADR·기능명세서 우선.
@@ -54,7 +54,7 @@ README · 3_SA · 4_SysA · 5_CA · 6_설계결정 · 9_기능명세서 · 10_�
 - 전 svg 직계 커넥터 합 == `wire()` 호출 수: **52 == 52**
 - `site` `npx tsc -b`: **exit 0**
 - 렌더 PNG 5760×3480(캔버스 3840×2320, DPR 1.5) — 라벨 겹침·잘림 육안 검수 후 2건(본방 송출·Artifact) 수정 재렌더
-- 기존 `5_Pokeclip_CA.html/png`·`content.ts` **미수정**(v2는 site 뷰어 미등록 신규 파일)
+- site 뷰어 5번으로 등록(`content.ts` DIAGRAMS num 5 · `content/diagrams/5.md` 문서 뷰)
 
 ## 검증 스크립트
-`scratchpad/verify-ca-v2.sh <html>` — 헤드리스 `--dump-dom`으로 HTML 내장 `#selftest`(관통·커넥터 수) 판독. HTML 자체가 자가검증을 담고 있어 재현 가능.
+헤드리스 `--dump-dom`으로 HTML 내장 `#selftest`(관통·커넥터 수) 판독. HTML 자체가 자가검증을 담고 있어 재현 가능.
