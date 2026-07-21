@@ -65,7 +65,6 @@
   .cdn { position:absolute; border-radius:12px; background:#fff; border:2px solid; padding:10px 14px; }
   .cdn h4 { font-size:12px; font-weight:800; }
   .cdn p { font-size:9.8px; color:#4b5563; margin-top:3px; line-height:1.5; }
-  .cdn-a { border-color:#0891b2; } .cdn-a h4 { color:#0e7490; }
   .cdn-b { border-color:#ED7100; } .cdn-b h4 { color:#c2410c; }
 
   .ext { position:absolute; background:#fff7ed; border:1.5px solid #fb923c; border-radius:10px; padding:8px 12px; }
@@ -77,7 +76,7 @@
 </head>
 <body>
   <div class="page-title">
-    <h1>Pokeclip · Cloud Architecture CA (2026.07) — AWS ap-northeast-2 · CDN 분기 2</h1>
+    <h1>Pokeclip · Cloud Architecture CA (2026.07) — AWS ap-northeast-2 · CDN: CloudFront</h1>
     <p>논리(SysA) → 물리(CA) 배포도 · 실선 = 요청/스트림 · 점선 = 비동기·배포·외부 · MVP: Single VPC · Single AZ</p>
   </div>
 
@@ -89,7 +88,7 @@
     <li>· PostgreSQL → <b>RDS Multi-AZ</b> · Redis → <b>ElastiCache primary+replica</b></li>
     <li>· S3 → <b>Amazon S3</b> (세그먼트·VOD 60일·클립 영구·채팅 아카이브)</li>
     <li>· 이벤트·잡 큐 → <b>SQS</b> (dev는 Redis Streams)</li>
-    <li>· CDN → <b>분기 A: Akamai AMD (본선)</b> / <b>분기 B: CloudFront (폴백)</b> · dev 스테이지 별도 운영</li>
+    <li>· CDN → <b>CloudFront 전용 (ADR-015)</b> — 라이브 LL-HLS·VOD·클립 단일 배포 · dev 스테이지 별도 운영</li>
   </div>
 
   <!-- 좌측: 클라이언트 & CDN -->
@@ -106,18 +105,14 @@
     <div class="row"><div class="awsic ic-pu">R53</div><div><h4>Route 53</h4><div class="sub">DNS — app.pokeclip / media.pokeclip</div></div></div>
   </div>
 
-  <div class="frame" style="left:40px; top:730px; width:452px; height:308px; border:1.8px dashed #0891b2; border-radius:14px;">
-    <div class="flabel" style="color:#0e7490; border:1.5px dashed #67e8f9;">CDN — 분기 2 병기</div>
+  <div class="frame" style="left:40px; top:730px; width:452px; height:236px; border:1.8px dashed #0891b2; border-radius:14px;">
+    <div class="flabel" style="color:#0e7490; border:1.5px dashed #67e8f9;">CDN — CloudFront</div>
   </div>
-  <div class="cdn cdn-a" id="cdn-a" style="left:62px; top:762px; width:408px;">
-    <h4>분기 A (본선) · Akamai AMD ⭐</h4>
-    <p>Adaptive Media Delivery — LL-HLS 딜리버리 공식 지원 · 현직 멘토 협력 구성(캐시 정책·토큰 인증) · 확보 선결 조건</p>
+  <div class="cdn cdn-b" id="cdn" style="left:62px; top:772px; width:408px;">
+    <h4>CloudFront (전용 · ADR-015)</h4>
+    <p>라이브 LL-HLS + VOD·클립 단일 배포 — 무료 티어 1TB/월 · 세그먼트 불변 장TTL · 매니페스트 초단위 TTL</p>
   </div>
-  <div class="cdn cdn-b" id="cdn-b" style="left:62px; top:868px; width:408px;">
-    <h4>분기 B (폴백) · CloudFront</h4>
-    <p>무료 티어 1TB/월 — 세그먼트 불변 장TTL · 매니페스트 초단위 TTL</p>
-  </div>
-  <div style="position:absolute; left:62px; top:966px; width:408px; font-size:9.8px; color:#4b5563; line-height:1.5;">
+  <div style="position:absolute; left:62px; top:886px; width:408px; font-size:9.8px; color:#4b5563; line-height:1.5;">
     오리진: <b>라이브 LL-HLS = Media EC2</b> · <b>VOD·클립 = S3</b> — 시청 트래픽 전부 CDN 경유
   </div>
 
@@ -304,10 +299,10 @@
   // 클라이언트 경로
   wire('cl-web','r53',{t:0.5});
   wire('cl-obs','media-ec2',{label:'SRT · UDP 9000 (CDN 미경유)',t:0.55});
-  wire('r53','cdn-a',{label:'시청 트래픽',t:0.45});
+  wire('r53','cdn',{label:'시청 트래픽',t:0.45});
   wire('r53','alb',{label:'API · HTTPS',t:0.72});
-  wire('cdn-a','media-ec2',{label:'라이브 LL-HLS 오리진',t:0.55});
-  wire('cdn-b','s3',{label:'VOD·클립 오리진',t:0.6});
+  wire('cdn','media-ec2',{label:'라이브 LL-HLS 오리진',t:0.55});
+  wire('cdn','s3',{label:'VOD·클립 오리진',t:0.6});
   // 내부
   wire('alb','core-ec2',{t:0.5});
   wire('media-ec2','s3',{label:'세그먼트 실시간 적재',t:0.55});

@@ -10,7 +10,7 @@ const ARTIFACTS = [
   { num: '3', title: 'SA — 서비스 아키텍처', kind: '다이어그램', to: '/diagrams/3' },
   { num: '4', title: 'SysA — 시스템 아키텍처', kind: '다이어그램', to: '/diagrams/4' },
   { num: '5', title: 'CA — 클라우드 아키텍처 (AWS)', kind: '다이어그램', to: '/diagrams/5' },
-  { num: '6', title: '설계 결정 인덱스 — ADR 현황판 14건', kind: '문서', to: '/adr' },
+  { num: '6', title: '설계 결정 인덱스 — ADR 현황판 15건', kind: '문서', to: '/adr' },
   { num: '7', title: '사업 기획서 (소마 심사용)', kind: '작성 예정', to: null },
   { num: '8', title: '하이라이트 탐지 연구 노트', kind: '문서', to: '/research' },
   { num: '9', title: '기능 명세서 (기술 멘토 리뷰용)', kind: '문서', to: '/spec' },
