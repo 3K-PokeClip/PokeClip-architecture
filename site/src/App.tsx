@@ -50,6 +50,17 @@ function App() {
               />
             }
           />
+          <Route
+            path="/dataflow"
+            element={
+              <DocPage
+                eyebrow="Doc 10 · Data Flow"
+                title="데이터 플로우"
+                lede="Media Origin → SQS → ECS → PostgreSQL — 이벤트·잡 큐 흐름과 대시보드 역산 스키마 초안."
+                markdown={DOCS.dataflow}
+              />
+            }
+          />
           <Route path="/adr" element={<AdrIndexPage />} />
           <Route path="/adr/:slug" element={<AdrDetailPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

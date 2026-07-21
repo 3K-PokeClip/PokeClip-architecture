@@ -14,6 +14,7 @@ const ARTIFACTS = [
   { num: '7', title: '사업 기획서 (소마 심사용)', kind: '작성 예정', to: null },
   { num: '8', title: '하이라이트 탐지 연구 노트', kind: '문서', to: '/research' },
   { num: '9', title: '기능 명세서 (기술 멘토 리뷰용)', kind: '문서', to: '/spec' },
+  { num: '10', title: '데이터 플로우 (SQS·DB 설계 초안)', kind: '문서', to: '/dataflow' },
 ] as const
 
 const STACK = [

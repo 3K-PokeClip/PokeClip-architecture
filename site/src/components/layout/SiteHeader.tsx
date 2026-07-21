@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { to: '/diagrams/0', label: '다이어그램', isActive: (path: string) => path.startsWith('/diagrams') },
   { to: '/spec', label: '기능명세서', isActive: (path: string) => path === '/spec' },
   { to: '/adr', label: '설계 · ADR', isActive: (path: string) => path.startsWith('/adr') },
+  { to: '/dataflow', label: '데이터플로우', isActive: (path: string) => path === '/dataflow' },
   { to: '/research', label: '연구노트', isActive: (path: string) => path === '/research' },
 ]
 

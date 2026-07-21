@@ -1,4 +1,5 @@
 // 저장소 루트의 원본 문서가 단일 소스 — 빌드 타임에 그대로 번들된다.
+import dataflowRaw from '../../../10_Pokeclip_데이터플로우.md?raw'
 import decisionsRaw from '../../../6_Pokeclip_설계결정.md?raw'
 import researchRaw from '../../../8_Pokeclip_하이라이트연구노트.md?raw'
 import specRaw from '../../../9_Pokeclip_기능명세서.md?raw'
@@ -26,6 +27,7 @@ export const DOCS = {
   spec: specRaw,
   decisions: decisionsRaw,
   research: researchRaw,
+  dataflow: dataflowRaw,
 }
 
 // 다이어그램의 반응형 문서 뷰 — 원본 HTML에서 파생해 site가 소유하는 md.

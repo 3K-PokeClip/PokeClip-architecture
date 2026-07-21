@@ -22,6 +22,7 @@ export function resolveDocHref(href: string): ResolvedHref {
   const diagram = clean.match(/^([0-5])_Pokeclip[^/]*\.(html|png)$/)
   if (diagram) return { to: `/diagrams/${diagram[1]}` }
 
+  if (clean.startsWith('10_')) return { to: '/dataflow' }
   if (clean.startsWith('6_')) return { to: '/adr' }
   if (clean.startsWith('8_')) return { to: '/research' }
   if (clean.startsWith('9_')) return { to: '/spec' }
