@@ -44,8 +44,8 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
     const stage = stageRef.current
     if (!stage) return
 
-    const applyPinch = (factor: number, clientX: number, clientY: number) => {
-      const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoomRef.current * factor))
+    const applyZoomAt = (nextZoomRaw: number, clientX: number, clientY: number) => {
+      const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, nextZoomRaw))
       if (next === zoomRef.current) return
       const rect = stage.getBoundingClientRect()
       const px = clientX - rect.left
@@ -62,7 +62,7 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
     const onWheel = (event: WheelEvent) => {
       if (!event.ctrlKey) return
       event.preventDefault()
-      applyPinch(Math.exp(-event.deltaY * 0.01), event.clientX, event.clientY)
+      applyZoomAt(zoomRef.current * Math.exp(-event.deltaY * 0.01), event.clientX, event.clientY)
     }
 
     let lastScale = 1
@@ -73,17 +73,47 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
     const onGestureChange = (event: Event) => {
       event.preventDefault()
       const gesture = event as SafariGestureEvent
-      applyPinch(gesture.scale / lastScale, gesture.clientX, gesture.clientY)
+      applyZoomAt(zoomRef.current * (gesture.scale / lastScale), gesture.clientX, gesture.clientY)
       lastScale = gesture.scale
+    }
+
+    // 모바일 두 손가락 핀치 — 제스처 시작 거리 대비 배율, 두 손가락 중점 기준.
+    let touchStartDist = 0
+    let touchStartZoom = 1
+    const touchDist = (touches: TouchList) =>
+      Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY)
+    const onTouchStart = (event: TouchEvent) => {
+      if (event.touches.length !== 2) return
+      event.preventDefault()
+      touchStartDist = touchDist(event.touches)
+      touchStartZoom = zoomRef.current
+    }
+    const onTouchMove = (event: TouchEvent) => {
+      if (event.touches.length !== 2 || touchStartDist === 0) return
+      event.preventDefault()
+      const midX = (event.touches[0].clientX + event.touches[1].clientX) / 2
+      const midY = (event.touches[0].clientY + event.touches[1].clientY) / 2
+      applyZoomAt(touchStartZoom * (touchDist(event.touches) / touchStartDist), midX, midY)
+    }
+    const onTouchEnd = () => {
+      touchStartDist = 0
     }
 
     stage.addEventListener('wheel', onWheel, { passive: false })
     stage.addEventListener('gesturestart', onGestureStart)
     stage.addEventListener('gesturechange', onGestureChange)
+    stage.addEventListener('touchstart', onTouchStart, { passive: false })
+    stage.addEventListener('touchmove', onTouchMove, { passive: false })
+    stage.addEventListener('touchend', onTouchEnd)
+    stage.addEventListener('touchcancel', onTouchEnd)
     return () => {
       stage.removeEventListener('wheel', onWheel)
       stage.removeEventListener('gesturestart', onGestureStart)
       stage.removeEventListener('gesturechange', onGestureChange)
+      stage.removeEventListener('touchstart', onTouchStart)
+      stage.removeEventListener('touchmove', onTouchMove)
+      stage.removeEventListener('touchend', onTouchEnd)
+      stage.removeEventListener('touchcancel', onTouchEnd)
     }
   }, [stageRef])
 
