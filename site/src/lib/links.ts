@@ -24,6 +24,7 @@ export function resolveDocHref(href: string): ResolvedHref {
 
   if (clean.startsWith('10_')) return { to: '/dataflow' }
   if (clean.startsWith('11_')) return { to: '/roles' }
+  if (clean.startsWith('12_')) return { to: '/m1' }
   if (clean.startsWith('6_')) return { to: '/adr' }
   if (clean.startsWith('8_')) return { to: '/research' }
   if (clean.startsWith('9_')) return { to: '/spec' }
