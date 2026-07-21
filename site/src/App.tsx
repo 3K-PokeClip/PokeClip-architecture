@@ -61,6 +61,17 @@ function App() {
               />
             }
           />
+          <Route
+            path="/roles"
+            element={
+              <DocPage
+                eyebrow="Doc 11 · Team Roles"
+                title="역할 분담"
+                lede="3인 분담 — 서비스 단위 오너십, 인터페이스 계약 8종, 조정 카드·폴백 기준."
+                markdown={DOCS.roles}
+              />
+            }
+          />
           <Route path="/adr" element={<AdrIndexPage />} />
           <Route path="/adr/:slug" element={<AdrDetailPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
