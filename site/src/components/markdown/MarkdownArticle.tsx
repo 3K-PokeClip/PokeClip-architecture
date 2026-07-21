@@ -48,7 +48,7 @@ const components: Components = {
 export function MarkdownArticle({ markdown }: { markdown: string }) {
   return (
     <div className="md-article">
-      <ReactMarkdown remarkPlugins={[remarkGfm, remarkCjkFriendly]} components={components}>
+      <ReactMarkdown remarkPlugins={[[remarkGfm, { singleTilde: false }], remarkCjkFriendly]} components={components}>
         {markdown}
       </ReactMarkdown>
     </div>
