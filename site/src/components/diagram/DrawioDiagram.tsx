@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { DrawioLabViewer } from '../drawio/DrawioLabViewer'
 
-// 승격된 draw.io/maxGraph 다이어그램 소스 — 0·1·2만 랩에서 정본화됐다.
+// 승격된 draw.io/maxGraph 다이어그램 소스 — 1·2가 랩에서 정본화됐다.
+// 0(유스케이스)은 self-contained HTML 원본이 정본이라 DiagramViewer로 렌더한다.
 // 대용량 XML은 지연 로드해 초기 번들에서 분리한다(각 청크 분리).
 const DRAWIO_LOADERS: Record<number, () => Promise<{ default: string }>> = {
-  0: () => import('../../../../labs/drawio/0_Pokeclip_UseCase.drawio?raw'),
   1: () => import('../../../../labs/drawio/1_Pokeclip_IA.drawio?raw'),
   2: () => import('../../../../labs/drawio/2_Pokeclip_UserJourney.drawio?raw'),
 }

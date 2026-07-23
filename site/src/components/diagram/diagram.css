@@ -137,6 +137,18 @@
   pointer-events: none;
 }
 
+/* 원본이 이동·확대·강조를 스스로 처리하는 다이어그램 — 무대를 채우고 마우스를 그대로 받는다 */
+.diagram-stage.self-interactive {
+  height: min(78vh, 860px);
+}
+
+.diagram-stage.self-interactive iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
 /* ── 다이어그램/문서 토글 ── */
 .diagram-controls {
   display: flex;
