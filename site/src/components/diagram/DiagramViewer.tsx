@@ -133,8 +133,12 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
     return () => document.removeEventListener('fullscreenchange', onChange)
   }, [])
 
+  const selfInteractive = Boolean(diagram.selfInteractive)
+
   // 원본 body의 실제 크기를 로드 후 실측하고, 노드·연결선 그래프를 구성한다.
+  // 원본이 자체 인터랙션을 가진 경우에는 둘이 충돌하므로 건드리지 않는다.
   const handleLoad = useCallback((event: SyntheticEvent<HTMLIFrameElement>) => {
+    if (event.currentTarget.dataset.selfInteractive === '1') return
     const doc = event.currentTarget.contentDocument
     if (!doc?.documentElement) return
     const w = doc.documentElement.scrollWidth
@@ -193,17 +197,19 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
           <span className="diagram-en">{diagram.en}</span>
         </p>
         <div className="diagram-actions">
-          <div className="zoom-controls" role="group" aria-label="확대/축소">
-            <button type="button" onClick={() => setZoom((z) => Math.max(0.5, z / 1.25))} aria-label="축소" title="축소">
-              −
-            </button>
-            <button type="button" className="zoom-reset" onClick={() => setZoom(1)} title="화면 폭에 맞춤">
-              {Math.round(zoom * 100)}%
-            </button>
-            <button type="button" onClick={() => setZoom((z) => Math.min(4, z * 1.25))} aria-label="확대" title="확대">
-              ＋
-            </button>
-          </div>
+          {!selfInteractive && (
+            <div className="zoom-controls" role="group" aria-label="확대/축소">
+              <button type="button" onClick={() => setZoom((z) => Math.max(0.5, z / 1.25))} aria-label="축소" title="축소">
+                −
+              </button>
+              <button type="button" className="zoom-reset" onClick={() => setZoom(1)} title="화면 폭에 맞춤">
+                {Math.round(zoom * 100)}%
+              </button>
+              <button type="button" onClick={() => setZoom((z) => Math.min(4, z * 1.25))} aria-label="확대" title="확대">
+                ＋
+              </button>
+            </div>
+          )}
           <button type="button" onClick={toggleFullscreen}>
             {isFullscreen ? '전체화면 종료' : '전체화면'}
           </button>
@@ -212,27 +218,45 @@ export function DiagramViewer({ diagram }: { diagram: DiagramMeta }) {
           </a>
         </div>
       </div>
-      <div className={zoom > 1 ? 'diagram-stage zoomed' : 'diagram-stage'} ref={stageRef}>
-        <div
-          className="diagram-canvas"
-          style={{ width: Math.round(natural.w * scale), height: Math.round(natural.h * scale) }}
-          onClick={handleCanvasClick}
-          onMouseMove={handleCanvasMove}
-        >
-          {scale > 0 && (
-            <iframe
-              key={diagram.file}
-              src={`/diagrams/${diagram.file}`}
-              title={`${diagram.title} 다이어그램`}
-              width={natural.w}
-              height={natural.h}
-              style={{ transform: `scale(${scale})` }}
-              onLoad={handleLoad}
-            />
-          )}
+      {selfInteractive ? (
+        <div className="diagram-stage self-interactive" ref={stageRef}>
+          <iframe
+            key={diagram.file}
+            src={`/diagrams/${diagram.file}`}
+            title={`${diagram.title} 다이어그램`}
+            data-self-interactive="1"
+            onLoad={handleLoad}
+          />
         </div>
-      </div>
-      {graphMode && (
+      ) : (
+        <div className={zoom > 1 ? 'diagram-stage zoomed' : 'diagram-stage'} ref={stageRef}>
+          <div
+            className="diagram-canvas"
+            style={{ width: Math.round(natural.w * scale), height: Math.round(natural.h * scale) }}
+            onClick={handleCanvasClick}
+            onMouseMove={handleCanvasMove}
+          >
+            {scale > 0 && (
+              <iframe
+                key={diagram.file}
+                src={`/diagrams/${diagram.file}`}
+                title={`${diagram.title} 다이어그램`}
+                width={natural.w}
+                height={natural.h}
+                style={{ transform: `scale(${scale})` }}
+                onLoad={handleLoad}
+              />
+            )}
+          </div>
+        </div>
+      )}
+      {selfInteractive && (
+        <p className="diagram-hint">
+          빈 곳을 드래그하면 화면이 따라옵니다 · 휠은 스크롤, Ctrl+휠은 확대 · 액터나 유스케이스를 클릭하면 관련
+          요소만 남고 나머지는 흐려집니다 — 같은 것을 다시 클릭하거나 빈 곳 클릭·Escape로 해제.
+        </p>
+      )}
+      {!selfInteractive && graphMode && (
         <p className="diagram-hint">
           {graphMode === 'wired'
             ? '박스를 클릭하면 화살표로 연결된 요소들이 떠오르며 강조됩니다 — 빈 곳이나 같은 박스를 다시 클릭하면 해제.'

@@ -14,10 +14,12 @@ export interface DiagramMeta {
   /** 원본 HTML body의 고정 캔버스 크기. height가 없는 문서는 로드 후 실측한다. */
   width: number
   height: number | null
+  /** 원본이 이동·확대·강조를 자체 처리하는 경우. 뷰어는 축소·클릭 그래프 대신 마우스를 원본에 넘긴다. */
+  selfInteractive?: boolean
 }
 
 export const DIAGRAMS: DiagramMeta[] = [
-  { num: 0, title: '유스케이스', en: 'Use Case', file: '0_Pokeclip_UseCase.html', width: 2700, height: 1425 },
+  { num: 0, title: '유스케이스', en: 'Use Case', file: '0_Pokeclip_UseCase.html', width: 1920, height: 1278, selfInteractive: true },
   { num: 1, title: 'IA · 정보 구조', en: 'Information Architecture', file: '1_Pokeclip_IA.html', width: 2280, height: 1638 },
   { num: 2, title: '유저 저니', en: 'User Journey', file: '2_Pokeclip_UserJourney.html', width: 2620, height: 1400 },
   { num: 3, title: '서비스 아키텍처', en: 'Service Architecture', file: '3_Pokeclip_SA.html', width: 2700, height: 1560 },
