@@ -5,102 +5,99 @@
 <title>Pokeclip · SA</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
+  /* 도트 그리드 캔버스 — 타이틀 바·컨테이너·범례 없는 미니멀 모노크롬 (IA 변형 디자인 문법) */
   body { font-family:'Pretendard','Noto Sans KR','Noto Sans CJK KR','Apple SD Gothic Neo',sans-serif;
-         background:#ffffff; width:2700px; height:1560px; position:relative; -webkit-font-smoothing:antialiased;
-         color:#111827; }
+         background-color:#fcfcfc;
+         background-image:radial-gradient(circle, #d9d9d9 1.2px, transparent 1.2px);
+         background-size:30px 30px; background-position:15px 15px;
+         width:2700px; height:1450px; position:relative; -webkit-font-smoothing:antialiased;
+         color:#111111; }
 
-  /* 상단 타이틀 — 검정 띠 + 굵은 흰 제목 + 얇은 밑줄 바 (EDGE 슬라이드 문법) */
-  .title-bar { position:absolute; left:34px; top:24px; height:66px; background:#111111;
-               display:flex; align-items:center; padding:0 26px 0 22px; }
-  .title-bar h1 { font-size:34px; font-weight:800; color:#ffffff; letter-spacing:-0.5px; }
-  .title-underline { position:absolute; left:34px; top:98px; width:452px; height:8px; background:#111111; }
-  .subtitle { position:absolute; left:36px; top:118px; font-size:14.5px; color:#111827; }
-
-  /* 최상위 환경 컨테이너 — 점(dotted) 테두리 대형 둥근 박스 + 좌상단 라벨 */
-  .env { position:absolute; border:2px dotted #9ca3af; border-radius:16px; }
-  .env-label { position:absolute; left:16px; top:-11px; background:#ffffff; padding:0 8px;
-               font-size:13.5px; font-weight:700; color:#374151; }
-
-  /* 역할 그룹 — 점선(dashed) 둥근 컨테이너 + 좌상단 작은 라벨 (노드보다 옅게) */
-  .grp { position:absolute; border:1.2px dashed #6b7280; border-radius:12px; }
-  .grp-label { position:absolute; left:14px; top:-9px; background:#ffffff; padding:0 6px;
-               font-size:11.5px; font-weight:600; color:#6b7280; }
-
-  /* 노드 — 흰 채움 + 얇은 검정 테두리 + 둥근 모서리 + 검정 텍스트 (이름 + 괄호 부제 한 줄) */
-  .node { position:absolute; background:#ffffff; border:1.3px solid #1f2937; border-radius:7px;
+  /* 노드 — 흰 채움 + 얇은 검정 테두리 + 살짝만 둥근 모서리 + 검정 텍스트 (색·그림자 없음) */
+  .node { position:absolute; background:#ffffff; border:1.2px solid #111111; border-radius:3px;
           display:flex; flex-direction:column; align-items:center; justify-content:center;
           text-align:center; padding:6px 8px; }
-  .node .nm { font-size:13px; font-weight:700; color:#111827; line-height:1.25; }
-  .node .sub { font-size:10.5px; font-weight:500; color:#374151; line-height:1.3; margin-top:3px; }
-  /* 강조 — Media Origin만 연한 파랑 채움 (EDGE의 Customer System과 동일 처리) */
-  .node.hl { background:#dbeafe; }
+  .node .nm { font-size:12.5px; font-weight:700; color:#111111; line-height:1.25; }
+  .node .sub { font-size:10px; font-weight:500; color:#555555; line-height:1.3; margin-top:3px; }
+  /* 강조 — Media Origin만 굵은 테두리 (모노크롬 유지) */
+  .node.hl { border-width:2px; }
+  .node.hl .nm { font-weight:800; }
 
-  svg.wires { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  /* 계층 밴드 — 옅은 채움 + 점선 테두리로 그룹 경계를 표시. 도트 그리드가 비치도록 반투명.
+     배선은 밴드 '사이' 빈 통로만 지나므로 밴드가 선을 가리지 않는다. */
+  .band { position:absolute; left:20px; width:2660px; z-index:0;
+          background:rgba(17,17,17,0.028); border:1.2px dashed #c4c4c4; border-radius:16px; }
+
+  /* 밴드 캡션 — 밴드 좌상단에 고정. 테두리 없는 스페이싱 라벨 (기존 톤 유지) */
+  .cap { position:absolute; z-index:1; font-size:11.5px; font-weight:800; letter-spacing:1.6px; color:#7a7a7a; }
+
+  svg.wires { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2; }
+  .node { z-index:3; }
+
+  /* 클릭 인터랙션 — 노드 클릭 시 연결만 빨간선(화살촉 포함)으로 강조, 나머지 디밍 (브라우저 열람 전용) */
+  .node { cursor:pointer; transition:opacity .15s; }
+  svg.wires path { transition:opacity .15s, stroke-width .15s; }
+  body.focus .node { opacity:.18; }
+  body.focus .node.on { opacity:1; }
+  body.focus .node.sel { outline:2px solid #e02424; outline-offset:2px; }
+  body.focus svg.wires path { opacity:.07; }
+  body.focus svg.wires path.on { opacity:1; stroke:#e02424; stroke-width:1.9; }
 </style>
 </head>
 <body>
-  <div class="title-bar"><h1>Service Architecture</h1></div>
-  <div class="title-underline"></div>
-  <div class="subtitle">화면 ↔ 서비스 4종 + 워커 2종 ↔ 큐 ↔ 데이터 — 역할 그룹으로 구획한 PokeClip 서비스 아키텍처</div>
+  <!-- 계층 밴드 컨테이너 — 노드보다 먼저 선언(맨 뒤에 깔림). 배선 통로(밴드 사이)는 비워 둔다. -->
+  <div class="band" style="top:18px;   height:122px;"></div>
+  <div class="band" style="top:168px;  height:146px;"></div>
+  <div class="band" style="top:438px;  height:168px;"></div>
+  <div class="band" style="top:728px;  height:148px;"></div>
+  <div class="band" style="top:968px;  height:168px;"></div>
+  <div class="band" style="top:1258px; height:174px;"></div>
 
-  <!-- 최상위 환경 컨테이너 (점선 프레임 · 노드와 형제 · 시각 구획만) -->
-  <div class="env" id="env-ext"    style="left:1500px; top:150px; width:1160px; height:150px;"><span class="env-label">외부 서비스</span></div>
-  <div class="env" id="env-client" style="left:40px;   top:345px; width:352px;  height:1150px;"><span class="env-label">클라이언트 환경</span></div>
-  <div class="env" id="env-poke"   style="left:432px;  top:345px; width:2228px; height:1150px;"><span class="env-label">PokeClip 환경</span></div>
+  <!-- 밴드 캡션 — 각 밴드 좌상단 -->
+  <div class="cap" style="left:40px; top:28px;">EXTERNAL</div>
+  <div class="cap" style="left:40px; top:178px;">CLIENT</div>
+  <div class="cap" style="left:40px; top:448px;">SERVICE</div>
+  <div class="cap" style="left:40px; top:738px;">QUEUE</div>
+  <div class="cap" style="left:40px; top:978px;">WORKER</div>
+  <div class="cap" style="left:40px; top:1268px;">DATA</div>
 
-  <!-- 역할 그룹 컨테이너 (점선 프레임 + 좌상단 라벨) -->
-  <div class="grp" id="grp-client" style="left:72px;   top:402px; width:288px; height:1068px;"><span class="grp-label">Client</span></div>
-  <div class="grp" id="grp-svc"    style="left:476px;  top:410px; width:344px; height:762px;"><span class="grp-label">Service</span></div>
-  <div class="grp" id="grp-q"      style="left:950px;  top:470px; width:300px; height:700px;"><span class="grp-label">Queue</span></div>
-  <div class="grp" id="grp-wrk"    style="left:1380px; top:574px; width:320px; height:346px;"><span class="grp-label">Worker</span></div>
-  <div class="grp" id="grp-cache"  style="left:2020px; top:410px; width:440px; height:175px;"><span class="grp-label">Cache</span></div>
-  <div class="grp" id="grp-db"     style="left:2020px; top:640px; width:440px; height:200px;"><span class="grp-label">Database</span></div>
-  <div class="grp" id="grp-store"  style="left:2020px; top:900px; width:440px; height:200px;"><span class="grp-label">Storage</span></div>
-
-  <!-- Client 노드 -->
-  <div class="node" id="ui-plugin" style="left:96px; top:452px;  width:240px; height:80px;"><div class="nm">OBS 플러그인</div><div class="sub">(SRT 송출)</div></div>
-  <div class="node" id="ui-setup"  style="left:96px; top:610px;  width:240px; height:80px;"><div class="nm">온보딩·설정</div></div>
-  <div class="node" id="ui-live"   style="left:96px; top:768px;  width:240px; height:80px;"><div class="nm">라이브 뷰</div></div>
-  <div class="node" id="ui-editor" style="left:96px; top:926px;  width:240px; height:80px;"><div class="nm">클립 에디터·보관함</div></div>
-  <div class="node" id="ui-vod"    style="left:96px; top:1084px; width:240px; height:80px;"><div class="nm">VOD 뷰</div><div class="sub">(60일)</div></div>
-  <div class="node" id="ui-ops"    style="left:96px; top:1242px; width:240px; height:80px;"><div class="nm">운영 콘솔</div><div class="sub">(운영자)</div></div>
-
-  <!-- Service 노드 (sv-media만 파랑 강조) -->
-  <div class="node"    id="sv-auth"  style="left:506px; top:470px; width:284px; height:98px;"><div class="nm">Auth·Account Service</div><div class="sub">(Spring Boot · H1~H5)</div></div>
-  <div class="node hl" id="sv-media" style="left:506px; top:632px; width:284px; height:98px;"><div class="nm">Media Origin</div><div class="sub">(Go · B1~B7)</div></div>
-  <div class="node"    id="sv-clip"  style="left:506px; top:794px; width:284px; height:98px;"><div class="nm">Clip Service</div><div class="sub">(Spring Boot · D2·E2·E3·E8·F4)</div></div>
-  <div class="node"    id="sv-chat"  style="left:506px; top:956px; width:284px; height:98px;"><div class="nm">Chat Collector·Analytics</div><div class="sub">(Node·TS · C1~C6)</div></div>
-
-  <!-- Queue 노드 (사각) -->
-  <div class="node" id="q-evt"    style="left:980px; top:540px; width:240px; height:84px;"><div class="nm">방송이벤트 큐</div></div>
-  <div class="node" id="q-render" style="left:980px; top:690px; width:240px; height:84px;"><div class="nm">렌더 잡 큐</div></div>
-  <div class="node" id="q-ai"     style="left:980px; top:840px; width:240px; height:84px;"><div class="nm">AI 잡 큐</div></div>
-  <div class="node" id="q-upload" style="left:980px; top:1004px; width:240px; height:84px;"><div class="nm">업로드 잡 큐</div></div>
-
-  <!-- Worker 노드 -->
-  <div class="node" id="sv-render" style="left:1415px; top:600px; width:250px; height:98px;"><div class="nm">Render·Upload Worker</div><div class="sub">(Spring+FFmpeg · F1~F5)</div></div>
-  <div class="node" id="sv-ai"     style="left:1415px; top:760px; width:250px; height:98px;"><div class="nm">AI Worker</div><div class="sub">(Python·Whisper · E4·E7)</div></div>
-
-  <!-- Cache · Database · Storage 노드 -->
-  <div class="node" id="st-rd" style="left:2060px; top:470px; width:360px; height:95px;"><div class="nm">Redis</div></div>
-  <div class="node" id="st-pg" style="left:2060px; top:705px; width:360px; height:110px;"><div class="nm">PostgreSQL</div></div>
-  <div class="node" id="st-s3" style="left:2060px; top:965px; width:360px; height:110px;"><div class="nm">S3</div></div>
-
-  <!-- External 노드 -->
-  <div class="node" id="ex-google"  style="left:1524px; top:214px; width:250px; height:64px;"><div class="nm">Google OAuth</div></div>
-  <div class="node" id="ex-youtube" style="left:1800px; top:214px; width:270px; height:64px;"><div class="nm">YouTube Data API</div></div>
-  <div class="node" id="ex-chzzk"   style="left:2100px; top:214px; width:240px; height:64px;"><div class="nm">CHZZK</div></div>
-  <div class="node" id="ex-soop"    style="left:2366px; top:214px; width:240px; height:64px;"><div class="nm">SOOP</div></div>
+  <!-- 노드 — 세로 흐름 밴드(External→Client→Service→Queue→Worker→Data) -->
+  <div class="node" id="ex-google" style="left:95px; top:48px; width:250px; height:62px;"><div class="nm">Google OAuth</div></div>
+  <div class="node" id="ex-soop" style="left:1440px; top:48px; width:200px; height:62px;"><div class="nm">SOOP</div></div>
+  <div class="node" id="ex-chzzk" style="left:1830px; top:48px; width:220px; height:62px;"><div class="nm">CHZZK</div></div>
+  <div class="node" id="ex-youtube" style="left:2380px; top:48px; width:250px; height:62px;"><div class="nm">YouTube Data API</div></div>
+  <div class="node" id="ui-setup" style="left:300px; top:200px; width:220px; height:82px;"><div class="nm">온보딩·설정</div></div>
+  <div class="node" id="ui-ops" style="left:580px; top:200px; width:220px; height:82px;"><div class="nm">운영 콘솔</div><div class="sub">(운영자)</div></div>
+  <div class="node" id="ui-plugin" style="left:860px; top:200px; width:260px; height:82px;"><div class="nm">OBS 플러그인</div><div class="sub">(SRT 송출)</div></div>
+  <div class="node" id="ui-editor" style="left:1180px; top:200px; width:230px; height:82px;"><div class="nm">클립 에디터·보관함</div></div>
+  <div class="node" id="ui-live" style="left:1600px; top:200px; width:300px; height:82px;"><div class="nm">라이브 뷰</div></div>
+  <div class="node" id="ui-vod" style="left:2160px; top:200px; width:230px; height:82px;"><div class="nm">VOD 뷰</div><div class="sub">(60일)</div></div>
+  <div class="node" id="sv-auth" style="left:150px; top:470px; width:320px; height:104px;"><div class="nm">Auth·Account Service</div><div class="sub">(Spring Boot · H1~H5)</div></div>
+  <div class="node" id="sv-clip" style="left:560px; top:470px; width:760px; height:104px;"><div class="nm">Clip Service</div><div class="sub">(Spring Boot · D2·E2·E3·E8·F4)</div></div>
+  <div class="node" id="sv-chat" style="left:1490px; top:470px; width:540px; height:104px;"><div class="nm">Chat Collector·Analytics</div><div class="sub">(Node·TS · C1~C6)</div></div>
+  <div class="node hl" id="sv-media" style="left:2130px; top:470px; width:430px; height:104px;"><div class="nm">Media Origin</div><div class="sub">(Go · B1~B7)</div></div>
+  <div class="node" id="q-ai" style="left:650px; top:760px; width:180px; height:84px;"><div class="nm">AI 잡 큐</div></div>
+  <div class="node" id="q-render" style="left:920px; top:760px; width:180px; height:84px;"><div class="nm">렌더 잡 큐</div></div>
+  <div class="node" id="q-upload" style="left:1160px; top:760px; width:160px; height:84px;"><div class="nm">업로드 잡 큐</div></div>
+  <div class="node" id="q-evt" style="left:1560px; top:760px; width:260px; height:84px;"><div class="nm">방송이벤트 큐</div></div>
+  <div class="node" id="sv-ai" style="left:652px; top:1000px; width:240px; height:104px;"><div class="nm">AI Worker</div><div class="sub">(Python·Whisper · E4·E7)</div></div>
+  <div class="node" id="sv-render" style="left:1118px; top:1000px; width:300px; height:104px;"><div class="nm">Render·Upload Worker</div><div class="sub">(Spring+FFmpeg · F1~F5)</div></div>
+  <div class="node" id="st-pg" style="left:390px; top:1290px; width:420px; height:110px;"><div class="nm">PostgreSQL</div></div>
+  <div class="node" id="st-s3" style="left:1240px; top:1290px; width:560px; height:110px;"><div class="nm">S3</div></div>
+  <div class="node" id="st-rd" style="left:2110px; top:1290px; width:380px; height:110px;"><div class="nm">Redis</div></div>
 
   <svg class="wires" id="wires"></svg>
 <script>
 (function(){
   const svg = document.getElementById('wires');
   const NS='http://www.w3.org/2000/svg';
-  // 배선 = 단일 스타일: 얇은 짙은회색 직교 엘보 실선 + 작은 화살촉 (엣지 라벨·점선 없음).
+  // 배선 = 직교 엘보. 실선(동기 호출) / 점선(큐 경유 비동기) 두 종. 평상시 중간 회색(교차 노이즈 완화),
+  // 클릭 강조 시 빨간 마커(#ar-r)로 스왑 — 화살촉까지 빨간색.
   svg.innerHTML = `<defs>
-    <marker id="ar" markerWidth="11" markerHeight="11" refX="8.4" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
-      <path d="M1,1 L8,4.5 L1,8" fill="none" stroke="#1f2937" stroke-width="1.3"/></marker>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3.6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M1,1 L7,3.6 L1,6.2" fill="none" stroke="#8f8f8f" stroke-width="1.15"/></marker>
+    <marker id="ar-r" markerWidth="9" markerHeight="9" refX="7" refY="3.6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M1,1 L7,3.6 L1,6.2" fill="none" stroke="#e02424" stroke-width="1.4"/></marker>
   </defs>`;
   function R(id){ const el=document.getElementById(id); const b=el.getBoundingClientRect();
     return {l:b.left,r:b.right,t:b.top,b:b.bottom,cx:b.left+b.width/2,cy:b.top+b.height/2,w:b.width,h:b.height}; }
@@ -110,8 +107,7 @@
   function padB(N){ return N.b-SIDE_PAD; }
   function padL(N){ return N.l+SIDE_PAD; }
   function padR(N){ return N.r-SIDE_PAD; }
-  // 장애물 회피 라우터 — 모든 노드 rect를 장애물로 등록하고,
-  // 중간축 후보들 중 '노드 관통 0 + 레인 중복 최소'인 경로를 자동 선택한다(결정적).
+  // 장애물 회피 라우터 — 노드 rect를 장애물로 등록하고, 노드 관통 0인 경로를 결정적으로 선택.
   const OBST=[];
   document.querySelectorAll('.node').forEach(function(el){
     const b=el.getBoundingClientRect();
@@ -127,8 +123,20 @@
     }
     return n;
   }
-  const USED_MX={}, USED_MY={}, USED_LANE={};
+  const USED_MX={}, USED_MY={}, USED_LANE={}, USED_GUT={};
   function bkt(v,s){ return Math.round(v/s); }
+  // 클리어 거터 후보 중 '관통 0 且 최소 재사용'인 x를 고른다 — 같은 소스의 세로 세그먼트 겹침 방지.
+  // (선택만 하고 커밋 안 함 — 성공 경로에서 gutUse()로 커밋)
+  function pickGutter(cands, atY0, atY1, a, b){
+    let best=null, bestU=Infinity;
+    for(const g of cands){
+      if(segCross(g,Math.min(atY0,atY1),g,Math.max(atY0,atY1),a,b)>0) continue;
+      const u=USED_GUT[bkt(g,9)]||0;
+      if(u<bestU){ bestU=u; best=g; if(u===0) break; }
+    }
+    return best;
+  }
+  function gutUse(g){ USED_GUT[bkt(g,9)]=(USED_GUT[bkt(g,9)]||0)+1; }
   function pickAxis(cands, from, to, horiz, skipA, skipB, used){
     let best=null, bestScore=Infinity, mid=cands[0];
     for(const m of cands){
@@ -158,143 +166,211 @@
   function hvhCross(p1,p2,mx,a,b){
     return segCross(p1.x,p1.y,mx,p1.y,a,b)+segCross(mx,p1.y,mx,p2.y,a,b)+segCross(mx,p2.y,p2.x,p2.y,a,b);
   }
-  // 클리어-레인 라우트(5세그) — 소스·대상 cy가 제3 노드 밴드에 함께 갇혀 3세그 엘보가
-  // 반드시 관통할 때: 소스 옆 거터에서 세로로 빠져 '노드 없는 가로 레인'을 타고 건너간 뒤
-  // 대상 옆 거터에서 대상 변으로 진입한다. 관통 0인 (레인y·거터x) 조합을 탐색.
-  function laneRoute(A,B,a,b,by){
+  // 클리어-레인 라우트(5세그) — 3세그 엘보가 반드시 관통할 때: 소스 옆 거터에서 세로로 빠져
+  // '노드 없는 가로 레인'을 타고 건너간 뒤 대상 옆 거터에서 진입. 관통 0인 조합을 탐색.
+  function laneRoute(A,B,a,b,ay0,by0,laneFix){
     const right=B.cx>=A.cx, dir=right?1:-1;
     const ax=right?A.r:A.l, bx=right?B.l:B.r;
-    const ay=clamp(A.cy,padT(A),padB(A));
+    const ay=(ay0!==undefined)?ay0:clamp(A.cy,padT(A),padB(A)), by=(by0!==undefined)?by0:clamp(B.cy,padT(B),padB(B));
     const yMid=(ay+by)/2, span=Math.abs(bx-ax);
-    // 거터 후보: g1은 소스 오른쪽으로 전진, g2는 대상에서 소스 쪽으로 후퇴.
     const g1=[], g2=[];
     for(let d=24; d<span-16; d+=20){ g1.push(ax+dir*d); g2.push(bx-dir*d); }
-    const yc=[yMid];
-    for(let k=1;k<=150;k++){ yc.push(yMid+k*7, yMid-k*7); }
+    // laneFix가 주어지면 그 y의 클리어 레인만 사용(전용 통로 강제) — 겹침 방지용 수동 배정.
+    const yc=[];
+    if(laneFix!==undefined){ yc.push(laneFix); }
+    else { yc.push(yMid); for(let k=1;k<=150;k++){ yc.push(yMid+k*7, yMid-k*7); } }
     for(const y0 of yc){
-      // 병렬 하이웨이 분산 — 같은 버킷 재사용 시 살짝 이동한 레인을 우선 시도
-      const stag=[y0, y0+((USED_LANE[bkt(y0,12)]||0))*11, y0-((USED_LANE[bkt(y0,12)]||0))*11];
+      const stag=(laneFix!==undefined)?[y0]:[y0, y0+((USED_LANE[bkt(y0,14)]||0))*14, y0-((USED_LANE[bkt(y0,14)]||0))*14];
       for(const laneY of stag){
         if(segCross(ax,laneY,bx,laneY,a,b)>0) continue;
-        let gx1=null;
-        for(const g of g1){
-          if(segCross(ax,ay,g,ay,a,b)>0) continue;
-          if(segCross(g,Math.min(ay,laneY),g,Math.max(ay,laneY),a,b)>0) continue;
-          gx1=g; break;
-        }
+        // 소스측 거터: 관통 0 且 최소 재사용으로 분산(같은 소스 세로 겹침 방지).
+        const g1clear=g1.filter(function(g){ return segCross(ax,ay,g,ay,a,b)===0; });
+        const gx1=pickGutter(g1clear, ay, laneY, a, b);
         if(gx1===null) continue;
-        let gx2=null;
-        for(const g of g2){
-          if(segCross(bx,by,g,by,a,b)>0) continue;
-          if(segCross(g,Math.min(by,laneY),g,Math.max(by,laneY),a,b)>0) continue;
-          gx2=g; break;
-        }
+        const g2clear=g2.filter(function(g){ return segCross(bx,by,g,by,a,b)===0; });
+        const gx2=pickGutter(g2clear, by, laneY, a, b);
         if(gx2===null) continue;
-        USED_LANE[bkt(laneY,12)]=(USED_LANE[bkt(laneY,12)]||0)+1;
+        USED_LANE[bkt(laneY,14)]=(USED_LANE[bkt(laneY,14)]||0)+1;
+        gutUse(gx1); gutUse(gx2);
         return 'M '+ax+' '+ay+' L '+gx1+' '+ay+' L '+gx1+' '+laneY+' L '+gx2+' '+laneY+' L '+gx2+' '+by+' L '+bx+' '+by;
       }
     }
     return null;
   }
-  function draw(d){
+  function draw(d,kind,a,b){
     const l=document.createElementNS(NS,'path');
     l.setAttribute('d',d); l.setAttribute('fill','none');
-    l.setAttribute('stroke','#1f2937'); l.setAttribute('stroke-width','1.3');
+    l.setAttribute('stroke','#8f8f8f'); l.setAttribute('stroke-width','1');
+    if(kind==='dash') l.setAttribute('stroke-dasharray','5 4');
     l.setAttribute('marker-end','url(#ar)');
+    if(a) l.dataset.a=a; if(b) l.dataset.b=b; // 클릭 인터랙션용 양 끝점 id
     svg.appendChild(l);
   }
-  // 2단계 라우팅 — 호출은 스펙만 수집, flush가 선언 순서 그대로 그린다(파서 위치매칭 불변).
-  const WIRES=[];
-  function wire(a,b,opts){ WIRES.push([a,b,opts||{}]); }
-  // 도착 변 판정(L/R/T/B) — 그리기 분기 조건과 동일해야 슬롯 카운트가 맞다.
-  function edgeOf(a,b,opts){
-    if(opts.gx!==undefined) return 'B';
-    const A=R(a),B=R(b),dx=B.cx-A.cx,dy=B.cy-A.cy;
-    if(!opts.v && (opts.h || Math.abs(dx)>=Math.abs(dy))) return dx>0?'L':'R';
-    return dy>0?'T':'B';
-  }
-  // off=변 중앙 기준 대칭 슬롯 오프셋 — 가로 도착 y, 세로/gx 도착 x에 적용(출발점은 기존 유지).
-  function drawWire(a,b,opts,off){
+  // 위치기반 라우팅: k번째 pair ↔ k번째 커넥터(선). 호출당 path 정확히 1개 → 쌍 수==선 수 자동 보존.
+  function route(a,b,kind,opts){
+    opts=opts||{};
     const A=R(a), B=R(b);
     const dx=B.cx-A.cx, dy=B.cy-A.cy;
+    const arr=opts.arr||0; // 도착 변 대칭 슬롯 오프셋
     if(opts.gx!==undefined){
-      const gx=opts.gx, hw=(opts.hw===undefined?330:opts.hw);
-      const ay=clamp(A.cy,padT(A),padB(A)), bx=clamp(B.cx+off,padL(B),padR(B));
-      draw('M '+A.r+' '+ay+' L '+gx+' '+ay+' L '+gx+' '+hw+' L '+bx+' '+hw+' L '+bx+' '+B.b);
+      const gx=opts.gx, hw=(opts.hw===undefined?220:opts.hw);
+      gutUse(gx); // 고정 gx도 거터 장부에 등록 → 다른 선이 같은 x를 재사용하지 않게 함
+      const ay=clamp(A.cy,padT(A),padB(A)), bx=clamp(B.cx+arr,padL(B),padR(B));
+      draw('M '+A.r+' '+ay+' L '+gx+' '+ay+' L '+gx+' '+hw+' L '+bx+' '+hw+' L '+bx+' '+B.b, kind, a, b);
       return;
     }
     if(!opts.v && (opts.h || Math.abs(dx)>=Math.abs(dy))){
-      const p1={x:dx>0?A.r:A.l, y:clamp(B.cy,padT(A),padB(A))};
-      const p2={x:dx>0?B.l:B.r, y:clamp(B.cy+off,padT(B),padB(B))};
-      const mx=pickAxis(candRange(p1.x,p2.x,22), {x:p1.x,y:p1.y}, {x:p2.x,y:p2.y}, true, a, b, USED_MX);
-      if(hvhCross(p1,p2,mx,a,b)===0){
-        draw('M '+p1.x+' '+p1.y+' L '+mx+' '+p1.y+' L '+mx+' '+p2.y+' L '+p2.x+' '+p2.y);
+      // 소스 출구 y는 스프레드(opts.ey), 도착 y는 대상 변 중앙+슬롯(opts.arr)으로 배분.
+      const p1y=(opts.ey!==undefined)?opts.ey:clamp(B.cy,padT(A),padB(A));
+      const p1={x:dx>0?A.r:A.l, y:p1y};
+      const p2={x:dx>0?B.l:B.r, y:clamp(B.cy+arr,padT(B),padB(B))};
+      // opts.lane = 전용 가로 통로 강제(5세그), opts.mx = 전용 세로축 강제(3세그) — 수동 corridor 배정.
+      if(opts.lane!==undefined){
+        const lf=laneRoute(A,B,a,b,p1y,p2.y,opts.lane);
+        if(lf){ draw(lf, kind, a, b); return; }
+      }
+      const mx=(opts.mx!==undefined)?opts.mx:pickAxis(candRange(p1.x,p2.x,22), {x:p1.x,y:p1.y}, {x:p2.x,y:p2.y}, true, a, b, USED_MX);
+      if(opts.mx!==undefined || hvhCross(p1,p2,mx,a,b)===0){
+        draw('M '+p1.x+' '+p1.y+' L '+mx+' '+p1.y+' L '+mx+' '+p2.y+' L '+p2.x+' '+p2.y, kind, a, b);
       } else {
-        // 3세그가 노드 관통 → 클리어-레인 우회(도착 y=슬롯). 실패 시 최소관통 엘보로 폴백.
-        const lr=laneRoute(A,B,a,b,p2.y);
-        draw(lr || ('M '+p1.x+' '+p1.y+' L '+mx+' '+p1.y+' L '+mx+' '+p2.y+' L '+p2.x+' '+p2.y));
+        const lr=laneRoute(A,B,a,b,p1y,p2.y);
+        draw(lr || ('M '+p1.x+' '+p1.y+' L '+mx+' '+p1.y+' L '+mx+' '+p2.y+' L '+p2.x+' '+p2.y), kind, a, b);
       }
     } else {
       const x1=clamp(B.cx,padL(A),padR(A));
-      const x2=clamp(B.cx+off,padL(B),padR(B)); // 도착 x = 변 중앙 + 슬롯
+      const x2=clamp(B.cx+arr,padL(B),padR(B)); // 도착 x = 변 중앙 + 슬롯
       const p1={x:x1, y:dy>0?A.b:A.t};
       const p2={x:x2, y:dy>0?B.t:B.b};
       const my=pickAxis(candRange(p1.y,p2.y,18), {x:p1.x,y:p1.y}, {x:p2.x,y:p2.y}, false, a, b, USED_MY);
-      draw('M '+p1.x+' '+p1.y+' L '+p1.x+' '+my+' L '+x2+' '+my+' L '+p2.x+' '+p2.y);
+      draw('M '+p1.x+' '+p1.y+' L '+p1.x+' '+my+' L '+x2+' '+my+' L '+p2.x+' '+p2.y, kind, a, b);
     }
   }
-  // 사전 패스: 대상id:변별 진입 수 n 집계 → 대칭 슬롯. 그리기 패스: 선언 순서 그대로.
-  function flush(){
-    const cnt={}, meta=[];
-    WIRES.forEach(function(w){ const e=edgeOf(w[0],w[1],w[2]); const k=w[1]+e; meta.push({e:e,i:(cnt[k]||0)}); cnt[k]=(cnt[k]||0)+1; });
-    WIRES.forEach(function(w,idx){
-      const e=meta[idx].e, i=meta[idx].i, n=cnt[w[1]+e], B=R(w[1]);
-      const edgeLen=(e==='L'||e==='R')?B.h:B.w;
-      const step=Math.min(24, edgeLen*0.6/Math.max(n,1));
-      const off=(i-(n-1)/2)*step;
-      drawWire(w[0],w[1],w[2],off);
+
+  // 연결 정의 — ["idA","idB"(,opts)] 배열-쌍(파서 mode 0). solids 먼저 → dashes 나중(선언순서=그리기순서).
+  // 쌍 수 == 그려지는 선 수. script 내 그 외 2문자열 배열리터럴 없음.
+  const solids = [
+    ['sv-auth','ex-google',{v:true}],
+    ['sv-chat','ex-soop',{v:true}],
+    ['sv-chat','ex-chzzk',{v:true}],
+    ['sv-render','ex-youtube',{gx:2660, hw:160}],
+    ['ui-setup','sv-auth',{v:true}],
+    ['ui-plugin','sv-auth',{v:true}],
+    ['ui-ops','sv-clip',{v:true}],
+    ['ui-plugin','sv-clip',{v:true}],
+    ['ui-plugin','sv-media',{h:true, lane:155}],
+    ['ui-editor','sv-clip',{v:true}],
+    ['ui-live','sv-clip',{h:true, lane:380}],
+    ['ui-live','sv-chat',{v:true}],
+    ['ui-live','sv-media',{v:true}],
+    ['ui-vod','sv-media',{v:true}],
+    ['sv-auth','st-pg',{v:true}],
+    ['sv-clip','st-pg',{v:true}],
+    ['sv-clip','st-rd',{h:true, lane:912}],
+    ['sv-chat','st-pg',{h:true, lane:1212}],
+    ['sv-chat','st-s3',{v:true}],
+    ['sv-media','st-s3',{h:true, lane:1244}],
+    ['sv-media','st-rd',{v:true}],
+    ['sv-render','st-s3',{h:true, lane:1150}],
+    ['sv-ai','st-s3',{h:true, lane:1180}],
+    ['sv-render','sv-clip',{h:true, lane:700}],
+    ['sv-ai','sv-clip',{v:true}],
+  ];
+  const dashes = [
+    ['sv-media','q-evt',{h:true}],
+    ['q-evt','sv-chat',{v:true}],
+    ['q-evt','sv-clip',{h:true, lane:648}],
+    ['sv-clip','q-render',{v:true}],
+    ['q-render','sv-render',{v:true}],
+    ['sv-clip','q-ai',{v:true}],
+    ['q-ai','sv-ai',{v:true}],
+    ['sv-clip','q-upload',{v:true}],
+    ['q-upload','sv-render',{v:true}],
+  ];
+  // 그리기 순서 = solids 먼저 → dashes 나중(파서 mode 0 보존). 각 원소 = 1 커넥터.
+  const all=[];
+  solids.forEach(function(p){ all.push({p:p, kind:'solid'}); });
+  dashes.forEach(function(p){ all.push({p:p, kind:'dash'}); });
+  // 같은 소스·같은 변에서 나가는 수평 라인들의 출구 y를 타깃 cy 순으로 분산 → 콜리니어 겹침 제거.
+  const grp={};
+  all.forEach(function(e,i){
+    const o=e.p[2]||{}; const A=R(e.p[0]), B=R(e.p[1]);
+    const horiz = !o.v && (o.h || Math.abs(B.cx-A.cx)>=Math.abs(B.cy-A.cy)) && o.gx===undefined;
+    if(horiz){ const side=(B.cx-A.cx)>=0?'R':'L'; const k=e.p[0]+side; (grp[k]=grp[k]||[]).push(i); }
+  });
+  Object.keys(grp).forEach(function(k){
+    const arr=grp[k];
+    if(arr.length<2) return;
+    arr.sort(function(i,j){ return R(all[i].p[1]).cy - R(all[j].p[1]).cy; });
+    const A=R(all[arr[0]].p[0]); const lo=A.t+13, hi=A.b-13;
+    arr.forEach(function(idx,n){ all[idx].ey = lo+(hi-lo)*(n/(arr.length-1)); });
+  });
+  // 도착 변별 대칭 슬롯 — 같은 변에 n개 진입 시 변 중앙 기준 분산(구석 진입 방지).
+  const agrp={};
+  all.forEach(function(e,i){
+    const o=e.p[2]||{}; const A=R(e.p[0]), B=R(e.p[1]);
+    const dx=B.cx-A.cx, dy=B.cy-A.cy;
+    let edge;
+    if(o.gx!==undefined) edge='B';
+    else if(!o.v && (o.h || Math.abs(dx)>=Math.abs(dy))) edge=(dx>0?'L':'R');
+    else edge=(dy>0?'T':'B');
+    (agrp[e.p[1]+edge]=agrp[e.p[1]+edge]||[]).push({i:i,edge:edge});
+  });
+  Object.keys(agrp).forEach(function(k){
+    const g=agrp[k], n=g.length, B=R(all[g[0].i].p[1]), edge=g[0].edge;
+    const edgeLen=(edge==='L'||edge==='R')?B.h:B.w;
+    const step=Math.min(24, edgeLen*0.6/Math.max(n,1));
+    g.forEach(function(o,idx){ all[o.i].arr=(idx-(n-1)/2)*step; });
+  });
+  all.forEach(function(e){
+    const o=Object.assign({}, e.p[2]||{});
+    if(e.ey!==undefined) o.ey=e.ey;
+    if(e.arr!==undefined) o.arr=e.arr;
+    route(e.p[0], e.p[1], e.kind, o);
+  });
+
+  // ---- 클릭 인터랙션: 노드 클릭 → 그 노드와 직접 연결된 배선·상대 노드만 강조, 나머지 디밍.
+  //      같은 노드 재클릭 또는 배경 클릭 → 해제. (브라우저 열람 전용 · PNG 추출 결과와 무관)
+  const EDGES=Array.prototype.slice.call(svg.querySelectorAll('path[data-a]'));
+  const NODES=Array.prototype.slice.call(document.querySelectorAll('.node'));
+  let SEL=null;
+  function setFocus(id){
+    SEL=id;
+    if(!id){
+      document.body.classList.remove('focus');
+      EDGES.forEach(function(p){ p.classList.remove('on'); p.setAttribute('marker-end','url(#ar)'); });
+      NODES.forEach(function(n){ n.classList.remove('on','sel'); });
+      return;
+    }
+    document.body.classList.add('focus');
+    const near={}; near[id]=true;
+    EDGES.forEach(function(p){
+      const hit=(p.dataset.a===id||p.dataset.b===id);
+      p.classList.toggle('on',hit);
+      p.setAttribute('marker-end', hit?'url(#ar-r)':'url(#ar)'); // 화살촉까지 빨간색으로 스왑
+      if(hit){ near[p.dataset.a]=true; near[p.dataset.b]=true; svg.appendChild(p); } // 강조선을 맨 위로
+    });
+    NODES.forEach(function(n){
+      n.classList.toggle('on', !!near[n.id]);
+      n.classList.toggle('sel', n.id===id);
     });
   }
-  // UI -> 서비스
-  wire('ui-plugin','sv-media');
-  wire('ui-plugin','sv-auth');
-  wire('ui-plugin','sv-clip');
-  wire('ui-setup','sv-auth');
-  wire('ui-live','sv-media');
-  wire('ui-live','sv-clip');
-  wire('ui-live','sv-chat');
-  wire('ui-editor','sv-clip');
-  wire('ui-vod','sv-media',{h:true});
-  wire('ui-ops','sv-clip',{h:true});
-  // 서비스 -> 저장소  (워커→PG 직접 쓰기 없음 — 불변식·계약8)
-  wire('sv-auth','st-pg');
-  wire('sv-clip','st-pg');
-  wire('sv-clip','st-rd');
-  wire('sv-media','st-s3');
-  wire('sv-media','st-rd');
-  wire('sv-chat','st-pg');
-  wire('sv-chat','st-s3');
-  wire('sv-render','st-s3');
-  wire('sv-ai','st-s3');
-  // 큐 경유  (방송이벤트 1큐가 2소비자로 팬아웃)
-  wire('sv-media','q-evt');
-  wire('q-evt','sv-chat');
-  wire('q-evt','sv-clip');
-  wire('sv-clip','q-render');
-  wire('q-render','sv-render');
-  wire('sv-clip','q-ai');
-  wire('q-ai','sv-ai');
-  wire('sv-clip','q-upload');
-  wire('q-upload','sv-render');
-  // 워커 보고  (결과·상태는 Clip Service 경유로만 영속화 — 계약1·8)
-  wire('sv-render','sv-clip');
-  wire('sv-ai','sv-clip');
-  // 외부  (상단 진입 — 좌측 이웃 노드 관통 방지)
-  wire('sv-auth','ex-google',{v:true});
-  wire('sv-render','ex-youtube',{v:true});
-  wire('sv-chat','ex-chzzk',{gx:885, hw:320});
-  wire('sv-chat','ex-soop',{gx:910, hw:335});
-  flush();
+  NODES.forEach(function(n){
+    n.setAttribute('role','button');
+    n.setAttribute('tabindex','0');
+    n.addEventListener('click', function(ev){
+      ev.stopPropagation();
+      setFocus(SEL===n.id ? null : n.id);
+    });
+    n.addEventListener('keydown', function(ev){
+      if(ev.key==='Enter' || ev.key===' '){
+        ev.preventDefault();
+        setFocus(SEL===n.id ? null : n.id);
+      } else if(ev.key==='Escape'){
+        setFocus(null);
+      }
+    });
+  });
+  document.body.addEventListener('click', function(){ setFocus(null); });
 })();
 </script>
 </body>
