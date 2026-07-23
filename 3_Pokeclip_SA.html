@@ -355,9 +355,19 @@
     });
   }
   NODES.forEach(function(n){
+    n.setAttribute('role','button');
+    n.setAttribute('tabindex','0');
     n.addEventListener('click', function(ev){
       ev.stopPropagation();
       setFocus(SEL===n.id ? null : n.id);
+    });
+    n.addEventListener('keydown', function(ev){
+      if(ev.key==='Enter' || ev.key===' '){
+        ev.preventDefault();
+        setFocus(SEL===n.id ? null : n.id);
+      } else if(ev.key==='Escape'){
+        setFocus(null);
+      }
     });
   });
   document.body.addEventListener('click', function(){ setFocus(null); });
