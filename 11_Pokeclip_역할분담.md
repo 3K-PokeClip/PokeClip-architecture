@@ -12,9 +12,9 @@
 
 | 담당 | 기능 ID |
 |---|---|
-| OBS 플러그인 (C++ · libobs) — 빌드·릴리스 포함 | A1~A7 |
-| Media Origin (Go) — 세그먼트 계약(B7) 오너 | B1~B7 |
-| 렌더·업로드 워커 (Spring+FFmpeg) + SQS 큐 설계 | F1~F5 |
+| OBS 플러그인 (C++ · libobs) — Windows 빌드·릴리스 포함 | A1~A7 |
+| Media Origin — **MediaMTX(수신·LL-HLS 먹싱·DVR) + 자체 레이어(Go)**: 매니페스트 합성·티어드 서빙·즉시 VOD·업로더/janitor. 세그먼트 계약(B7) 오너 | B1~B7 |
+| 렌더·업로드 워커 (Spring+FFmpeg) + SNS/SQS·Job DLQ Reconciler 운영 설계 | F1~F5 |
 | 인프라 전체 — 로컬 compose·CI/CD·모니터링·CDN·HA·prod | I1~I3 · I5~I7 |
 | 온보딩 연결 테스트(송출 체크리스트) 판정 로직 | — |
 | 7번 사업 기획서 주도 (전원 리뷰) | — |
@@ -37,31 +37,34 @@
 |---|---|
 | PostgreSQL 스키마·마이그레이션 (10번 문서 기반) + Redis 설계(키·TTL·pub/sub) | — |
 | Auth·Account Service (Spring) — OAuth·권한·채널·스트림 키·승인 | H1~H5 (백엔드) |
-| Clip Service (Spring) — 점프카드(만료 포함)·레시피·템플릿·승인 플로우 | D2·E8·F4의 서비스 측 |
+| Clip Service (Spring) — 점프카드(만료 포함)·레시피·템플릿·승인 플로우·잡 상태 API·Job DLQ Reconciler | D2·E8·F4의 서비스 측 |
 | 에디터 서버 파트 — 구간 디코드·RMS 무음 필터·웨이브폼 (FFmpeg 커맨드 스펙은 1번 제공) | E2·E3 (서버) |
 
 **근거**: Auth·Clip은 6개 서비스 중 DB 결합도가 가장 높은 둘 — 스키마 설계자가 그 스키마를 쓰는 서비스를 직접 짜야 탁상설계가 안 된다. Redis 활용처(세션=Auth, SSE 팬아웃=Clip)도 전부 이 안에 있다.
 
 ---
 
-## 인터페이스 계약 8종 (경계는 문서에서 만난다)
+## 인터페이스 계약 9종 (경계는 문서에서 만난다)
 
 | # | 계약 | 당사자 |
 |---|---|---|
-| 1 | SQS 잡 메시지 스키마 (렌더·AI·업로드) | 3 → 1·2 |
-| 2 | 점프카드 SSE + 채팅 차트 API | 3 ↔ 2 |
+| 1 | 렌더·AI·업로드 잡 수명주기 — SQS command 공통 envelope + `POST /internal/jobs/{jobId}/events` 상태 콜백. command는 `schemaVersion`, `jobId`, `jobType`, `clipId`, `correlationId`, `idempotencyKey`, `requestedAt`, `sourceKeys`, `recipeVersion`; callback은 `Idempotency-Key`와 `STARTED|PROGRESS|RETRY_SCHEDULED|SUCCEEDED|TERMINAL_FAILED`를 사용 | 설계·승인=1, 생산·상태 소유=3, 소비=1·2 |
+| 2 | **2A** Chat→Clip `POST /internal/broadcasts/{streamId}/highlights`(`streamTimestampMs`, `window.startMs/endMs`) · **2B** Web→Clip 요청 / Clip→Web SSE `GET /api/broadcasts/{streamId}/events` · **2C** Web→Chat 요청 / Chat→Web 응답 `GET /api/broadcasts/{streamId}/chat-chart?from&to&bucket` | 2A=2→3, 2B=3↔2, 2C=2 내부 경계 |
 | 3 | LL-HLS/DVR 재생 URL·매니페스트 규약 | 1 → 2 |
-| 4 | 스트림 키 검증 (발급=Auth, 검증=Media) | 3 ↔ 1 |
-| 5 | 유튜브 토큰 조회 (보관=Auth, 사용=업로드 워커) | 3 → 1 |
+| 4 | OBS Control API — 방송별 `streamId` 공통 사용, Bearer stream key 인증. **4A** Plugin→Media `PUT /api/streams/{streamId}/track-manifest`(manifestVersion 멱등·단조 증가) · **4B** Plugin→Clip `POST /api/streams/{streamId}/marks`(`Idempotency-Key=eventId`, 2A와 동일한 `broadcast.started`=0 방송 좌표) · **4C** Media/Clip→Auth `POST /internal/stream-keys/verify` | Plugin·Media·계약 승인=1, Clip·Auth=3 |
+| 5 | 유튜브 토큰 — Auth가 Secrets Manager에 저장·회전, 잡에는 `tokenSecretRef`만 포함, Render·Upload Worker가 제한 IAM으로 직접 read | 보관=3, 사용=1 |
 | 6 | 레시피 JSON 스키마 (crop·트랙·자막) — **최우선 확정** | 2 ↔ 3 ↔ 1 |
 | 7 | FFmpeg 구간 디코드 커맨드 스펙 (E2·E3용) | 1 → 3 |
 | 8 | AI 결과 반영 API (워커→Clip Service, DB 직접 쓰기 금지) | 2 → 3 |
+| 9 | Broadcast Lifecycle Event — Media→SNS FIFO `broadcast-lifecycle.fifo`→Chat/Clip 전용 SQS FIFO·DLQ. `MessageGroupId=streamId`, `MessageDeduplicationId=eventId`, envelope·멱등·역순 방어는 ADR-016/10번 정본 | 설계·승인·생산=1, Chat 소비=2, Clip 소비=3 |
+
+계약 1의 DLQ terminal 처리는 별도 서비스가 아니라 Clip Service 내부 **Job DLQ Reconciler**가 담당한다. Worker는 S3만 직접 읽고 쓰며 PostgreSQL 상태·결과는 계약 1·8을 통해 Clip Service가 영속화한다.
 
 ## 유보·조정 사항
 
 - **운영 콘솔(I4)은 MVP 제외** — MVP 기간엔 CloudWatch 대시보드+DB 쿼리로 대체. 추후 착수 시: UI=2번, 모니터링·잡 재시도 API=1번, 계정 통계 API=3번.
 - **조정 카드**: M1 체크포인트에서 2번의 프론트 P0가 밀리면 AI Worker(E4·E7)를 3번으로 이동한다.
-- **폴백 기준**: Media Origin·플러그인은 M1에 시간 상한을 두고, 초과 시 세그먼트 계약(B7) 기반 FFmpeg 오케스트레이션 / 기존 오픈소스 플러그인 포크로 전환한다.
+- **폴백 기준(2026-07-27 갱신)**: 미디어 서버는 **MediaMTX 채택으로 수신·먹싱·DVR 리스크가 해소**됐고(ADR-003 갱신), 남은 리스크는 자체 합성 레이어(매니페스트·티어링)뿐 — B7 세그먼트 계약 기반 FFmpeg 오케스트레이션 폴백은 그대로 유지. **플러그인은 `sorayuki/obs-multi-rtmp` 포크로 착수 확정**(6트랙 네이티브 전제, 별도 private repo `pokeclip-obs-plugin`, GPL-2.0) — "포크 전환"은 폴백이 아니라 기본 경로가 됐다.
 
 ## 공통 규칙
 
