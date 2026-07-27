@@ -8,13 +8,14 @@
 
 ## 0단계 — 계약 먼저 (첫 2~3일, 코드보다 먼저)
 
-M1에 필요한 계약 3개만 확정한다. 전부 1번이 초안, 2번이 소비자 관점 리뷰.
+M1에 필요한 계약 4개를 확정한다. 전부 1번이 초안, 소비자인 2·3번이 해당 경계를 리뷰. **초안 완성분은 [contracts/](contracts/) 폴더에 있다.**
 
 | 계약 | 내용 |
 |---|---|
-| SRT 입력 규약 | streamid·passphrase·트랙 매핑 |
-| B7 세그먼트 계약 | 디렉토리·매니페스트 규격 — 폴백 헤지의 전제 |
-| LL-HLS/DVR 재생 규약 | 매니페스트 형태·윈도우 길이·세그먼트 URL·시킹 기준 (역할분담 계약 3번) |
+| SRT 입력 규약 | **형식**: `streamid`=`#!::r=<26자 Crockford Base32>,m=publish` · `passphrase`=32자 랜덤/AES-256 · 트랙 매핑=**6트랙**([ADR-017](adr/ADR-017_오디오트랙6.md)) · **저장**: streamid=해시(PG)/passphrase=Secrets Manager([ADR-018](adr/ADR-018_스트림키저장.md)) · **전달**: 페어링 코드 · 방송 중 재발급 불가([ADR-019](adr/ADR-019_스트림키형식전달.md)) · **인코딩 규약**([ADR-020](adr/ADR-020_LLHLS_DVR파라미터.md)): MPEG-TS · H.264 · 전 트랙 AAC · **인코더 keyint = 2초 고정**(30fps `-g 60` / 60fps `-g 120`) — 플러그인이 강제 지정. *근거: 세그먼트는 키프레임에서만 절단 가능 → 4s 세그먼트는 GOP의 정수배여야 드리프트가 없다.* — *남은 미정: 페어링 코드 만료·rate limit* |
+| B7 세그먼트 계약 | 디렉토리·매니페스트 규격 — 폴백 헤지의 전제. **세그먼트 인덱스**(매니페스트 생성의 단일 진실원, S3 LIST 금지)의 필드·상태전이·소유는 → **[contracts/계약-세그먼트인덱스.md](contracts/계약-세그먼트인덱스.md)** (1↔3) |
+| LL-HLS/DVR 재생 규약 | 매니페스트 형태·윈도우·세그먼트 URL·시킹 기준 → **[contracts/계약3-LLHLS-DVR재생규약.md](contracts/계약3-LLHLS-DVR재생규약.md)** (1→2, 세그먼트 4s·part 0.5s·DVR 1h·**catch-up 끄기**) |
+| 방송 생명주기 이벤트 | envelope · SNS FIFO→소비자별 SQS FIFO·DLQ · 멱등성·역순 방어 → [ADR-016](adr/ADR-016_방송이벤트_SNS_SQS팬아웃.md) |
 
 ## 1단계 — 언블록 장치 두 개 (첫 주)
 
