@@ -17,7 +17,7 @@ https://media.pokeclip.com/live/{streamId}/index.m3u8
 - **LL-HLS** — `EXT-X-PART`, `EXT-X-PRELOAD-HINT`, `EXT-X-SERVER-CONTROL:CAN-BLOCK-RELOAD=YES` 포함
 - master playlist → media playlist 2단 구조
 - **세그먼트 4초 / part 0.5초 / PART-HOLD-BACK 1.5초** (RFC 8216bis "SHOULD ≥ part×3" 충족. OME 실측 "Balanced" 구성과 동일 → 지연 ~1.9초)
-  - ⚠️ **실측 주의**: 우리 스파이크에서 mediamtx는 `PART-HOLD-BACK = part × 2.5`를 뱉었다(part 200ms → 0.5s). part 500ms면 **1.25초**가 나올 수 있으므로 값은 **실제 매니페스트로 확정**한다(플레이어는 매니페스트 값을 따르면 됨).
+  - ✅ **[확정 2026-07-31] 실측값: PART-HOLD-BACK = 1.33초** (mediamtx 1.19.3, PART-TARGET 0.533s × 2.5 — 로컬 compose 검증에서 확인). 플레이어는 매니페스트가 주는 값을 그대로 따르면 됨. 인프라 변경으로 값이 바뀌면 이 문서를 갱신한다.
 - 오디오는 **라이브에서 단일 트랙**(6트랙은 녹화·클립 렌더 전용 → 플레이어에 오디오 트랙 선택 UI 불필요)
 - **화질 선택(ABR) 없음 — MVP 단일 화질.** MediaMTX는 트랜스코딩을 하지 않아 렌디션이 1개다. **컨트롤바에 화질 설정 UI를 만들 필요 없음**(추후 FFmpeg 트랜스코드 도입 시 master playlist에 렌디션이 추가되며 그때 계약을 갱신한다).
 
@@ -25,7 +25,7 @@ https://media.pokeclip.com/live/{streamId}/index.m3u8
 
 - **되감기 창 = 최대 1시간**(세그먼트 900개). UI 표시 상한도 `1:00:00`.
 - 세그먼트 URL은 **매니페스트가 주는 대로 따라갈 것.** ⚠️ **[갱신 2026-07-27]** 내부 구조 변경: ~~최신 5분 `/hot/*`·이전 `/cold/*` prefix 분기~~ → **세그먼트당 정규 URL 하나 영구 고정**(핫/콜드는 서버 내부 CloudFront origin failover로 해소, [ADR-020](adr/ADR-020_LLHLS_DVR파라미터.md) §3-갱신). **프론트 영향 없음** — "주는 대로 따라간다" 원칙 그대로이며, URL이 시간에 따라 안 바뀌므로 오히려 더 단순.
-- seek 정밀도 ~1초(GOP 1초).
+- seek 정밀도 ~2초(GOP 2초). *(2026-07-31 정정: "GOP 1초"는 ADR-020의 07-25 정정(1s→2s, Apple 오소링 권고) 이전 값)*
 
 ## 4. 플레이어 요구사항 ⭐ (핵심 — 안 지키면 "DVR이 안 되는" 것처럼 보인다)
 
