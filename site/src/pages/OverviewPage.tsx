@@ -17,6 +17,7 @@ const ARTIFACTS = [
   { num: '10', title: '데이터 플로우 (SQS·DB 설계 초안)', kind: '문서', to: '/dataflow' },
   { num: '11', title: '역할 분담 (3인 · 인터페이스 계약)', kind: '문서', to: '/roles' },
   { num: '12', title: 'M1 수직 슬라이스 실행 계획', kind: '문서', to: '/m1' },
+  { num: '—', title: '웹 IA — 대시보드 정보 구조 (v5.7)', kind: '다이어그램', to: '/web-ia' },
 ] as const
 
 const STACK = [
