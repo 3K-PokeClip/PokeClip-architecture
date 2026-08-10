@@ -8,7 +8,7 @@ const here = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(here, '..', '..')
 const dest = join(here, '..', 'public', 'diagrams')
 
-const files = readdirSync(repoRoot).filter((f) => /^[0-5]_Pokeclip_.*\.html$/.test(f))
+const files = readdirSync(repoRoot).filter((f) => /^[0-5]_Pokeclip_.*\.html$/.test(f) || f === 'WebIA.html')
 if (files.length === 0) {
   throw new Error(`다이어그램 HTML을 찾지 못했습니다: ${repoRoot}`)
 }

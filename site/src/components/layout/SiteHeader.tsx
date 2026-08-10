@@ -4,6 +4,7 @@ import './layout.css'
 const NAV_ITEMS = [
   { to: '/', label: '개요', isActive: (path: string) => path === '/' },
   { to: '/diagrams/0', label: '다이어그램', isActive: (path: string) => path.startsWith('/diagrams') },
+  { to: '/web-ia', label: '웹 IA', isActive: (path: string) => path === '/web-ia' },
   { to: '/spec', label: '기능명세서', isActive: (path: string) => path === '/spec' },
   { to: '/adr', label: '설계 · ADR', isActive: (path: string) => path.startsWith('/adr') },
   { to: '/dataflow', label: '데이터플로우', isActive: (path: string) => path === '/dataflow' },

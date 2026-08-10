@@ -6,6 +6,7 @@ import { AdrDetailPage, AdrIndexPage } from './pages/AdrPage'
 import { DiagramsPage } from './pages/DiagramsPage'
 import { DocPage } from './pages/DocPage'
 import { OverviewPage } from './pages/OverviewPage'
+import { WebIaPage } from './pages/WebIaPage'
 
 const DrawioIaLabPage = lazy(() =>
   import('./pages/labs/DrawioIaLabPage').then(({ DrawioIaLabPage: Page }) => ({ default: Page })),
@@ -38,6 +39,7 @@ function App() {
           <Route path="/" element={<OverviewPage />} />
           <Route path="/diagrams" element={<Navigate to="/diagrams/0" replace />} />
           <Route path="/diagrams/:num" element={<DiagramsPage />} />
+          <Route path="/web-ia" element={<WebIaPage />} />
           <Route
             path="/labs/drawio/0"
             element={
