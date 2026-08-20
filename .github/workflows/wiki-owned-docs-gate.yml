@@ -1,8 +1,8 @@
-# 위키로 이관한 문서를 이 저장소에서 다시 고치지 못하게 막는다.
+# 위키로 이관한 문서를 이 저장소에서 다시 쓰지 못하게 막는다.
 #
 # 2026-07-31 이관 때 원본을 안 지워서, 7주 뒤 계약4·9가 죽은 위치에 발행됐다.
-# 팀이 보는 곳(위키)에 없어 3번이 계약9를 못 찾았다. 표지판(README)만으로는
-# 또 놓치므로 기계가 막는다.
+# 팀이 보는 곳(위키)에 없어 3번이 계약9를 못 찾았다. 표지판(contracts/README.md)
+# 만으로는 또 놓치므로 기계가 막는다.
 name: wiki-owned-docs-gate
 
 on:
@@ -17,28 +17,35 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 위키 소유 경로 변경 차단
+      - name: 위키 소유 경로에 쓰는 것을 차단
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
           set -euo pipefail
           git fetch --quiet origin "$BASE_REF"
-          # 병합 기준점부터의 변경만 본다 — base에 이미 있던 파일은 걸리지 않는다
-          changed=$(git diff --name-only "origin/$BASE_REF...HEAD")
+
+          # core.quotepath=false 가 필수다. 켜져 있으면 한글 경로가
+          # "contracts/\352\263\204..." 처럼 8진수로 나와 grep이 통째로 빗나간다.
+          # 이 저장소 문서는 대부분 한글 파일명이라 게이트가 조용히 무력화된다.
+          #
+          # --diff-filter=AM: 추가·수정만 막는다. 삭제(정리)는 허용해야
+          # 이관 잔재를 치울 수 있다.
+          changed=$(git -c core.quotepath=false diff --name-only --diff-filter=AM \
+                      "origin/$BASE_REF...HEAD")
 
           # adr/ · contracts/ · 루트 설계 문서(N_Pokeclip_*.md)는 위키 소유.
           # contracts/README.md 는 "여기 쓰지 마라" 표지판이라 예외.
           blocked=$(printf '%s\n' "$changed" \
             | grep -E '^(adr/|contracts/|[0-9]+_Pokeclip_.*\.md$)' \
-            | grep -v '^contracts/README\.md$' || true)
+            | grep -vx 'contracts/README\.md' || true)
 
           if [ -n "$blocked" ]; then
-            echo "::error::위키 소유 문서를 이 저장소에서 고치려 한다. 정본은 3K-PokeClip/PokeClip-LLM-WIKI 다."
+            echo "::error::위키 소유 문서를 이 저장소에서 쓰려 한다. 정본은 3K-PokeClip/PokeClip-LLM-WIKI 다."
             echo "차단된 파일:"
-            printf '  %s\n' $blocked
+            printf '%s\n' "$blocked" | sed 's/^/  /'
             echo ""
             echo "갈 곳: 계약→위키 contracts/ · ADR→위키 adr/ · 설계 문서→위키 specs/"
             echo "이 저장소가 맡는 것: 다이어그램(*.png·*.html)·라우팅 엔진(labs/·site/)"
             exit 1
           fi
-          echo "위키 소유 경로 변경 없음 — 통과"
+          echo "위키 소유 경로에 쓴 것 없음 — 통과"
