@@ -34,10 +34,11 @@ jobs:
                       "origin/$BASE_REF...HEAD")
 
           # adr/ · contracts/ · 루트 설계 문서(N_Pokeclip_*.md)는 위키 소유.
-          # contracts/README.md 는 "여기 쓰지 마라" 표지판이라 예외.
+          # 각 폴더의 README.md 는 "여기 쓰지 마라" 표지판이라 예외 —
+          # 표지판까지 막으면 정리 PR 자체가 통과 못 한다(실제로 PR #3 에서 걸렸다).
           blocked=$(printf '%s\n' "$changed" \
             | grep -E '^(adr/|contracts/|[0-9]+_Pokeclip_.*\.md$)' \
-            | grep -vx 'contracts/README\.md' || true)
+            | grep -vE '^(adr|contracts)/README\.md$' || true)
 
           if [ -n "$blocked" ]; then
             echo "::error::위키 소유 문서를 이 저장소에서 쓰려 한다. 정본은 3K-PokeClip/PokeClip-LLM-WIKI 다."
