@@ -24,7 +24,9 @@ OBS 플러그인이 본방(치지직/SOOP)과 병행으로 멀티오디오(6트�
 | — | 웹 IA — 대시보드 정보 구조 (v5.7 · 2026-08-10) | [PNG](WebIA.png) · [HTML](WebIA.html) |
 | — | 결정별 ADR | **팀 위키 `PokeClip-LLM-WIKI` `adr/`** — 이 저장소에는 없다([경위](adr/README.md)) |
 
-다이어그램은 self-contained HTML로 작성 후 PNG로 렌더링한다(HTML이 원본). **이 저장소가 맡는 것은 다이어그램 산출물과 라우팅 엔진(`labs/`·`site/`)뿐이다** — 서술형 설계 문서·ADR·계약의 정본은 2026-07-31에 팀 위키 `PokeClip-LLM-WIKI`로 이관됐다. 경위와 갈 곳은 [`adr/README.md`](adr/README.md)·[`contracts/README.md`](contracts/README.md).
+다이어그램은 self-contained HTML로 작성 후 PNG로 렌더링한다(HTML이 원본). **이 저장소가 맡는 것은 다이어그램 산출물(PNG·HTML)뿐이다** — 서술형 설계 문서·ADR·계약의 정본은 2026-07-31에 팀 위키 `PokeClip-LLM-WIKI`로 이관됐다. 경위와 갈 곳은 [`adr/README.md`](adr/README.md)·[`contracts/README.md`](contracts/README.md).
+
+다이어그램 편집·생성은 draw.io로 직접 한다. 자체 제작 라우팅 엔진(`site/`·`labs/`)은 2026-08-20 폐기했다 — draw.io 공식 도구가 대체한다. 되살릴 일이 생기면 git 이력에 남아 있다.
 
 ## 다이어그램 미리보기
 
