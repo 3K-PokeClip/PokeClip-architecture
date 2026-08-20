@@ -13,18 +13,18 @@ OBS 플러그인이 본방(치지직/SOOP)과 병행으로 멀티오디오(6트�
 | 2 | 유저 저니 | [PNG](2_Pokeclip_UserJourney.png) · [HTML](2_Pokeclip_UserJourney.html) |
 | 3 | SA (서비스 아키텍처) | [PNG](3_Pokeclip_SA.png) · [HTML](3_Pokeclip_SA.html) |
 | 4 | SysA (시스템 아키텍처) | [PNG](4_Pokeclip_SysA.png) · [HTML](4_Pokeclip_SysA.html) |
-| 5 | CA (클라우드 아키텍처, AWS · Target Production) | [PNG](5_Pokeclip_CA.png) · [HTML](5_Pokeclip_CA.html) · [설계 노트](5_Pokeclip_CA.md) |
-| 6 | 설계 결정 인덱스 (ADR 현황판) | [6_Pokeclip_설계결정.md](6_Pokeclip_설계결정.md) |
+| 5 | CA (클라우드 아키텍처, AWS · Target Production) | [PNG](5_Pokeclip_CA.png) · [HTML](5_Pokeclip_CA.html) · 설계 노트는 **팀 위키 `PokeClip-LLM-WIKI` `specs/`** |
+| 6 | 설계 결정 인덱스 (ADR 현황판) | **팀 위키 `PokeClip-LLM-WIKI` `specs/`** + 위키 `decisions.md` |
 | 7 | 기획서 (사업 — 소마 심사용) | 작성 예정 |
-| 8 | 하이라이트 탐지 연구 노트 (팀 실측) | [8_Pokeclip_하이라이트연구노트.md](8_Pokeclip_하이라이트연구노트.md) |
-| 9 | 기능 명세서 (기술 멘토 리뷰용) | [9_Pokeclip_기능명세서.md](9_Pokeclip_기능명세서.md) |
-| 10 | 데이터 플로우 (SQS·DB 설계 초안) | [10_Pokeclip_데이터플로우.md](10_Pokeclip_데이터플로우.md) |
-| 11 | 역할 분담 (3인 · 인터페이스 계약) | [11_Pokeclip_역할분담.md](11_Pokeclip_역할분담.md) |
-| 12 | M1 수직 슬라이스 실행 계획 | [12_Pokeclip_M1실행계획.md](12_Pokeclip_M1실행계획.md) |
+| 8 | 하이라이트 탐지 연구 노트 (팀 실측) | **팀 위키 `PokeClip-LLM-WIKI` `specs/`** |
+| 9 | 기능 명세서 (기술 멘토 리뷰용) | **팀 위키 `PokeClip-LLM-WIKI` `specs/`** |
+| 10 | 데이터 플로우 (SQS·DB 설계 초안) | **팀 위키 `PokeClip-LLM-WIKI` `specs/`** |
+| 11 | 역할 분담 (3인 · 인터페이스 계약) | **팀 위키 `PokeClip-LLM-WIKI` `specs/`** |
+| 12 | M1 수직 슬라이스 실행 계획 | **팀 위키 `PokeClip-LLM-WIKI` `specs/`** |
 | — | 웹 IA — 대시보드 정보 구조 (v5.7 · 2026-08-10) | [PNG](WebIA.png) · [HTML](WebIA.html) |
 | — | 결정별 ADR | **팀 위키 `PokeClip-LLM-WIKI` `adr/`** — 이 저장소에는 없다([경위](adr/README.md)) |
 
-다이어그램은 self-contained HTML로 작성 후 PNG로 렌더링한다(HTML이 원본). 설계 결정은 ADR 체계로 관리 — 결정이 뒤집히면 삭제하지 않고 `대체됨 → ADR-XXX`로 이력을 보존한다.
+다이어그램은 self-contained HTML로 작성 후 PNG로 렌더링한다(HTML이 원본). **이 저장소가 맡는 것은 다이어그램 산출물과 라우팅 엔진(`labs/`·`site/`)뿐이다** — 서술형 설계 문서·ADR·계약의 정본은 2026-07-31에 팀 위키 `PokeClip-LLM-WIKI`로 이관됐다. 경위와 갈 곳은 [`adr/README.md`](adr/README.md)·[`contracts/README.md`](contracts/README.md).
 
 ## 다이어그램 미리보기
 
