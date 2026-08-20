@@ -22,7 +22,7 @@ OBS 플러그인이 본방(치지직/SOOP)과 병행으로 멀티오디오(6트�
 | 11 | 역할 분담 (3인 · 인터페이스 계약) | [11_Pokeclip_역할분담.md](11_Pokeclip_역할분담.md) |
 | 12 | M1 수직 슬라이스 실행 계획 | [12_Pokeclip_M1실행계획.md](12_Pokeclip_M1실행계획.md) |
 | — | 웹 IA — 대시보드 정보 구조 (v5.7 · 2026-08-10) | [PNG](WebIA.png) · [HTML](WebIA.html) |
-| — | 결정별 ADR 15건 | [adr/](adr/) |
+| — | 결정별 ADR | **팀 위키 `PokeClip-LLM-WIKI` `adr/`** — 이 저장소에는 없다([경위](adr/README.md)) |
 
 다이어그램은 self-contained HTML로 작성 후 PNG로 렌더링한다(HTML이 원본). 설계 결정은 ADR 체계로 관리 — 결정이 뒤집히면 삭제하지 않고 `대체됨 → ADR-XXX`로 이력을 보존한다.
 

@@ -18,4 +18,8 @@ jobs:
           persist-credentials: false
 
       - name: Push main to xodbs1021/PokeClip-architecture
-        run: git push https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com/xodbs1021/PokeClip-architecture.git HEAD:main
+        # --force 가 필요하다. 이건 미러이지 갈래가 아니다 — 조직이 항상 이긴다.
+        # 2026-08-16 계약4·9가 미러에 직접 발행되면서 미러가 2커밋 앞서버렸고,
+        # 그 뒤로 이 push 가 non-fast-forward 로 거부돼 미러가 얼어붙었다.
+        # 미러에 직접 쓴 것은 다음 동기화에 사라진다. 쓰려면 조직 저장소에 써라.
+        run: git push --force https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com/xodbs1021/PokeClip-architecture.git HEAD:main
